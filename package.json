@@ -1,0 +1,55 @@
+{
+  "name": "thinkdrop-phi4-service",
+  "version": "1.0.0",
+  "description": "Phi4 NLP/LLM microservice for Thinkdrop AI - Intent parsing, entity extraction, and general Q&A",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:load": "node tests/load/load-test.js",
+    "models:download": "node scripts/download-models.js",
+    "lint": "eslint src/",
+    "format": "prettier --write \"src/**/*.js\""
+  },
+  "keywords": [
+    "nlp",
+    "intent-parsing",
+    "entity-extraction",
+    "llm",
+    "phi4",
+    "microservice",
+    "mcp"
+  ],
+  "author": "Thinkdrop AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "@xenova/transformers": "^2.6.0",
+    "axios": "^1.6.0",
+    "compromise": "^14.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "express-rate-limit": "^7.1.0",
+    "helmet": "^7.0.0",
+    "natural": "^6.0.0",
+    "winston": "^3.11.0"
+  },
+  "optionalDependencies": {
+    "@tensorflow-models/universal-sentence-encoder": "^1.3.0",
+    "@tensorflow/tfjs": "^4.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "nodemon": "^3.0.0",
+    "prettier": "^3.0.0",
+    "supertest": "^6.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

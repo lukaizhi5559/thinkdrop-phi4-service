@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  phi4:
+    build: .
+    container_name: thinkdrop-phi4-service
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./models:/app/models
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - HOST=0.0.0.0
+      - API_KEY=${API_KEY}
+      - DEFAULT_PARSER=distilbert
+      - ENABLE_DISTILBERT=true
+      - ENABLE_FAST=true
+      - MODEL_WARMUP_ON_START=true
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/service.health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
