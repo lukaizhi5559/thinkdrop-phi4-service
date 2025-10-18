@@ -11,6 +11,13 @@ router.post('/intent.parse', validateIntentParseRequest, async (req, res, next) 
   try {
     const { message, context, options } = req.body.payload;
     
+    console.log('Intent parse request:', { message, options });
+    
+    // Validate message exists
+    if (!message) {
+      throw new Error('message is required in payload');
+    }
+    
     // Parse intent
     const result = await intentParsingService.parseIntent(message, options || {});
     

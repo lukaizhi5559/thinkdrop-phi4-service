@@ -17,15 +17,34 @@ class IntentParsingService {
    * @returns {Promise<Object>} Parsed result
    */
   async parseIntent(message, options = {}) {
+    console.log('parseIntent called with:', { 
+      message: message, 
+      messageType: typeof message,
+      messageValue: JSON.stringify(message),
+      options 
+    });
+    
+    if (!message) {
+      throw new Error('message parameter is required');
+    }
+    
+    if (typeof message !== 'string') {
+      throw new Error(`message must be a string, got ${typeof message}`);
+    }
+    
     const parserName = options.parser || process.env.DEFAULT_PARSER || 'distilbert';
     
     try {
       const parser = await this.factory.getParser(parserName);
+      console.log('Parser obtained:', parserName);
+      
       const result = await parser.parse(message, options);
+      console.log('Parse result:', result);
       
       return result;
     } catch (error) {
       console.error('Intent parsing failed:', error);
+      console.error('Error stack:', error.stack);
       throw new Error(`Intent parsing failed: ${error.message}`);
     }
   }

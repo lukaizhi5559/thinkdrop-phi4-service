@@ -207,7 +207,7 @@ class FastIntentParser {
     }
     
     // Short imperative sentences are likely commands
-    if (message.split(' ').length <= 4 && doc.has('#Imperative')) {
+    if (lowerMessage.split(' ').length <= 4 && doc.has('#Imperative')) {
       score += 0.15;
     }
     
@@ -262,7 +262,7 @@ class FastIntentParser {
     }
     
     // Short messages with greetings are likely pure greetings
-    if (message.split(' ').length <= 5 && score > 0) {
+    if (lowerMessage.split(' ').length <= 5 && score > 0) {
       score += 0.3;
     }
     

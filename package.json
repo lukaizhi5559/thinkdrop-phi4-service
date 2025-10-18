@@ -39,7 +39,11 @@
   },
   "optionalDependencies": {
     "@tensorflow-models/universal-sentence-encoder": "^1.3.0",
-    "@tensorflow/tfjs": "^4.0.0"
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-converter": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "seedrandom": "^3.0.5"
   },
   "devDependencies": {
     "eslint": "^8.0.0",

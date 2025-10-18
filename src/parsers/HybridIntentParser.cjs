@@ -51,6 +51,14 @@ class HybridIntentParser {
 
   async initializeSemanticModels() {
     try {
+      // Import tfjs-node first to use native backend
+      try {
+        await import('@tensorflow/tfjs-node');
+        console.log('  ✅ Using TensorFlow.js native backend');
+      } catch (e) {
+        console.log('  ⚠️ tfjs-node not available, using JavaScript backend');
+      }
+      
       // Dynamically import TensorFlow.js modules
       const tf = await import('@tensorflow/tfjs');
       const use = await import('@tensorflow-models/universal-sentence-encoder');
