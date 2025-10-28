@@ -83,13 +83,22 @@ class LLMService {
           stop: [
             '\n\nUser:',
             '\nUser:',
+            '\nUSER:',
+            'USER:',
             '\nuser:',
+            'user:',
+            '\nAssistant:',
+            '\nASSISTANT:',
+            'ASSISTANT:',
+            '\nassistant:',
+            'assistant:',
             '**[End',
             '[End',
             '*Note',
             'Note to developers',
-            'assistant:',
-            '\n\n###'
+            '\n\n###',
+            'The user asked',
+            'The assistant'
           ]
         }
       }, {
@@ -131,18 +140,18 @@ class LLMService {
   }
 
   _buildPrompt(query, memories, conversationHistory) {
-    // Build concise system instructions
-    let prompt = 'You are a helpful AI assistant. Answer naturally and conversationally in 1-2 sentences. Never add [End] or meta-commentary.\n\n';
+    // Build concise system instructions - no role labels to avoid simulation
+    let prompt = 'Answer the question naturally in 1-2 sentences. Do not simulate conversations or add role labels.\n\n';
     
     // Add memories if available
     if (memories && memories.length > 0) {
-      prompt += '=== WHAT YOU KNOW ===\n';
+      prompt += 'Context:\n';
       memories.forEach((m, idx) => {
         // Extract just the key info from memory text
         const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
-        prompt += `${idx + 1}. ${memoryText}\n`;
+        prompt += `- ${memoryText}\n`;
       });
-      prompt += '\nUse these facts to answer.\n\n';
+      prompt += '\n';
       
       console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories in prompt`);
     } else {
@@ -160,15 +169,25 @@ class LLMService {
           .replace(/\[End.*?\]/g, '')
           .replace(/\*Note.*?\*/g, '')
           .replace(/Note to developers.*$/s, '')
+          .replace(/USER:.*$/gm, '')
+          .replace(/ASSISTANT:.*$/gm, '')
+          .replace(/The user asked.*$/gm, '')
+          .replace(/The assistant.*$/gm, '')
           .trim()
       })).filter(c => c.content.length > 0); // Remove empty messages
       
-      const contextStr = cleanedHistory.map(c => `${c.role}: ${c.content}`).join('\n');
-      prompt += `${contextStr}\n\n`;
+      if (cleanedHistory.length > 0) {
+        prompt += 'Recent conversation:\n';
+        cleanedHistory.forEach(c => {
+          const label = c.role === 'user' ? 'Q' : 'A';
+          prompt += `${label}: ${c.content}\n`;
+        });
+        prompt += '\n';
+      }
     }
     
-    // Add current query
-    prompt += `User: ${query}\n\nAssistant:`;
+    // Add current query with clear instruction
+    prompt += `Question: ${query}\n\nAnswer (1-2 sentences only):`;
     
     console.log('📚 [GENERAL-ANSWER] System prompt length:', prompt.length);
     

@@ -146,16 +146,56 @@ MODEL_WARMUP_ON_START=true
 
 ## 🧪 Testing
 
+### Automated Testing
+
 ```bash
-# Unit tests
+# Run all tests with Jest
+npm test
+
+# Unit tests only
 npm run test:unit
 
-# Integration tests
+# Integration tests only
 npm run test:integration
 
-# All tests
-npm test
+# Test with real API calls
+node scripts/test-messages.js
+
+# Test all endpoints with shell script
+./scripts/test-api.sh
 ```
+
+### Manual Testing
+
+```bash
+# Test a message prompt
+curl -X POST http://localhost:3003/intent.parse \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "version": "mcp.v1",
+    "service": "phi4",
+    "action": "intent.parse",
+    "payload": {
+      "message": "Remember I have a meeting tomorrow at 3pm"
+    }
+  }'
+
+# Test LLM Q&A
+curl -X POST http://localhost:3003/general.answer \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "version": "mcp.v1",
+    "service": "phi4",
+    "action": "general.answer",
+    "payload": {
+      "query": "What is the capital of France?"
+    }
+  }'
+```
+
+See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions.
 
 ## 🐳 Docker Deployment
 
