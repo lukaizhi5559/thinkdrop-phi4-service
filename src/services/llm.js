@@ -43,25 +43,44 @@ class LLMService {
 
     const startTime = Date.now();
 
+    // Extract memories and conversation history from context
+    const memories = options.context?.memories || [];
+    const conversationHistory = options.context?.conversationHistory || [];
+    
+    // Log memory usage
+    console.log('📚 [GENERAL-ANSWER] Received request:', {
+      query: query,
+      memoryCount: memories.length,
+      conversationLength: conversationHistory.length
+    });
+    
+    if (memories.length > 0) {
+      console.log('📚 [GENERAL-ANSWER] Memories being used:');
+      memories.forEach((m, idx) => {
+        const preview = m.text.substring(0, 50).replace(/\n/g, ' ');
+        console.log(`  ${idx + 1}. "${preview}..." (similarity: ${m.similarity.toFixed(3)})`);
+      });
+    }
+
     // If LLM is disabled, return placeholder
     if (!this.enabled) {
       return this._generatePlaceholderResponse(query, options, startTime);
     }
 
     try {
-      const prompt = this._buildPrompt(query, options.context);
+      const prompt = this._buildPrompt(query, memories, conversationHistory);
       
       const response = await axios.post(this.apiUrl, {
         model: options.model || this.model,
         prompt: prompt,
         stream: false,
         options: {
-          temperature: options.temperature || 0.3,  // Lower for more focused answers
-          num_predict: options.maxTokens || 100,    // Much shorter default
+          temperature: options.temperature || 0.7,  // Natural, varied responses
+          num_predict: options.maxTokens || 150,    // Enough for complete thoughts
           top_k: options.topK || 40,
           top_p: options.topP || 0.9,
           num_ctx: options.contextLength || 2048,
-          stop: ['\n\nUser:', '\n\n###', '<|end|>', 'Instruction']
+          stop: ['\n\nUser:', '\n\n###', '<|end|>', 'Instruction:', '\nuser:']
         }
       }, {
         timeout: options.timeout || 30000,
@@ -75,6 +94,8 @@ class LLMService {
         confidence: this._calculateConfidence(response.data),
         sources: options.sources || [],
         tokensUsed: response.data.eval_count || 0,
+        usedMemories: memories.length > 0,
+        memoryCount: memories.length,
         metadata: {
           model: response.data.model || this.model,
           processingTimeMs,
@@ -99,16 +120,37 @@ class LLMService {
     }
   }
 
-  _buildPrompt(query, context) {
-    // Build a concise prompt with system instructions
-    let prompt = 'You are a helpful assistant. Provide concise, direct answers without extra explanations unless asked.\n\n';
+  _buildPrompt(query, memories, conversationHistory) {
+    // Build concise system instructions
+    let prompt = 'You are a helpful AI assistant. Answer directly and concisely in 1-2 sentences.\n\n';
     
-    if (context && context.length > 0) {
-      const contextStr = context.map(c => `${c.role}: ${c.content}`).join('\n');
+    // Add memories if available
+    if (memories && memories.length > 0) {
+      prompt += '=== WHAT YOU KNOW ABOUT THE USER ===\n';
+      memories.forEach((m, idx) => {
+        // Extract just the key info from memory text
+        const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
+        prompt += `${idx + 1}. ${memoryText}\n`;
+      });
+      prompt += '\nAnswer based on these facts. Be brief and direct.\n\n';
+      
+      console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories in prompt`);
+    } else {
+      console.log('⚠️ [GENERAL-ANSWER] No memories provided');
+    }
+    
+    // Add conversation history (last few exchanges only)
+    if (conversationHistory && conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-4); // Only last 4 messages
+      const contextStr = recentHistory.map(c => `${c.role}: ${c.content}`).join('\n');
       prompt += `${contextStr}\n\n`;
     }
     
+    // Add current query
     prompt += `User: ${query}\n\nAssistant:`;
+    
+    console.log('📚 [GENERAL-ANSWER] System prompt length:', prompt.length);
+    
     return prompt;
   }
 

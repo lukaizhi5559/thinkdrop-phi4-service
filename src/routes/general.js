@@ -11,8 +11,8 @@ router.post('/general.answer', validateGeneralAnswerRequest, async (req, res, ne
   try {
     const { query, context, options } = req.body.payload;
     
-    // Generate answer
-    const result = await llmService.generateAnswer(query, options || {});
+    // Generate answer with context (including memories)
+    const result = await llmService.generateAnswer(query, { ...options, context });
     
     res.json({
       version: 'mcp.v1',
