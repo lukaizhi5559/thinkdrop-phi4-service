@@ -80,7 +80,17 @@ class LLMService {
           top_k: options.topK || 40,
           top_p: options.topP || 0.9,
           num_ctx: options.contextLength || 2048,
-          stop: ['\n\nUser:', '\n\n###', '<|end|>', 'Instruction:', '\nuser:']
+          stop: [
+            '\n\nUser:',
+            '\nUser:',
+            '\nuser:',
+            '**[End',
+            '[End',
+            '*Note',
+            'Note to developers',
+            'assistant:',
+            '\n\n###'
+          ]
         }
       }, {
         timeout: options.timeout || 30000,
@@ -122,27 +132,38 @@ class LLMService {
 
   _buildPrompt(query, memories, conversationHistory) {
     // Build concise system instructions
-    let prompt = 'You are a helpful AI assistant. Answer directly and concisely in 1-2 sentences.\n\n';
+    let prompt = 'You are a helpful AI assistant. Answer naturally and conversationally in 1-2 sentences. Never add [End] or meta-commentary.\n\n';
     
     // Add memories if available
     if (memories && memories.length > 0) {
-      prompt += '=== WHAT YOU KNOW ABOUT THE USER ===\n';
+      prompt += '=== WHAT YOU KNOW ===\n';
       memories.forEach((m, idx) => {
         // Extract just the key info from memory text
         const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
         prompt += `${idx + 1}. ${memoryText}\n`;
       });
-      prompt += '\nAnswer based on these facts. Be brief and direct.\n\n';
+      prompt += '\nUse these facts to answer.\n\n';
       
       console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories in prompt`);
     } else {
       console.log('⚠️ [GENERAL-ANSWER] No memories provided');
     }
     
-    // Add conversation history (last few exchanges only)
+    // Clean and add conversation history (last few exchanges only)
     if (conversationHistory && conversationHistory.length > 0) {
       const recentHistory = conversationHistory.slice(-4); // Only last 4 messages
-      const contextStr = recentHistory.map(c => `${c.role}: ${c.content}`).join('\n');
+      const cleanedHistory = recentHistory.map(c => ({
+        role: c.role,
+        // Remove any [End] markers and meta-commentary from history
+        content: c.content
+          .replace(/\*\*\[End.*?\]\*\*/g, '')
+          .replace(/\[End.*?\]/g, '')
+          .replace(/\*Note.*?\*/g, '')
+          .replace(/Note to developers.*$/s, '')
+          .trim()
+      })).filter(c => c.content.length > 0); // Remove empty messages
+      
+      const contextStr = cleanedHistory.map(c => `${c.role}: ${c.content}`).join('\n');
       prompt += `${contextStr}\n\n`;
     }
     
