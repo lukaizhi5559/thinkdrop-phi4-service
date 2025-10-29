@@ -165,6 +165,9 @@ CRITICAL RULES:
 - If memories exist and are relevant, USE THEM in your response
 - If NO memories are provided or memories don't contain the answer, say "I don't have that information stored yet"
 - NEVER make up or invent information that isn't in the memories or conversation history
+- NEVER make negative inferences: If user says "I love X", DO NOT assume they dislike Y
+- DO NOT infer preferences from unrelated memories: "loves roses" does NOT mean "dislikes dandelions"
+- Only state facts that are EXPLICITLY mentioned - do not infer, assume, or extrapolate
 - Answer naturally in 1-2 sentences
 - Do not simulate conversations or add role labels
 
