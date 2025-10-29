@@ -72,8 +72,11 @@ class LLMService {
     try {
       const prompt = this._buildPrompt(query, memories, conversationHistory, systemInstructions);
       
+      const modelToUse = options.model || this.model;
+      console.log(`🤖 [LLM] Using model: ${modelToUse}`);
+      
       const response = await axios.post(this.apiUrl, {
-        model: options.model || this.model,
+        model: modelToUse,
         prompt: prompt,
         stream: false,
         options: {
