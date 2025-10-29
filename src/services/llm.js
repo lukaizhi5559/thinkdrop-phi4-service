@@ -43,16 +43,18 @@ class LLMService {
 
     const startTime = Date.now();
 
-    // Extract memories, conversation history, and system instructions from context
+    // Extract memories, conversation history, web results, and system instructions from context
     const memories = options.context?.memories || [];
     const conversationHistory = options.context?.conversationHistory || [];
+    const webSearchResults = options.context?.webSearchResults || [];
     const systemInstructions = options.context?.systemInstructions || '';
     
-    // Log memory usage
+    // Log context usage
     console.log('📚 [GENERAL-ANSWER] Received request:', {
       query: query,
       memoryCount: memories.length,
       conversationLength: conversationHistory.length,
+      webResultsCount: webSearchResults.length,
       hasSystemInstructions: !!systemInstructions
     });
     
@@ -64,13 +66,21 @@ class LLMService {
       });
     }
 
+    if (webSearchResults.length > 0) {
+      console.log('🌐 [GENERAL-ANSWER] Web search results being used:');
+      webSearchResults.forEach((r, idx) => {
+        const preview = r.text.substring(0, 60).replace(/\n/g, ' ');
+        console.log(`  ${idx + 1}. "${preview}..."`);
+      });
+    }
+
     // If LLM is disabled, return placeholder
     if (!this.enabled) {
       return this._generatePlaceholderResponse(query, options, startTime);
     }
 
     try {
-      const prompt = this._buildPrompt(query, memories, conversationHistory, systemInstructions);
+      const prompt = this._buildPrompt(query, memories, conversationHistory, webSearchResults, systemInstructions);
       
       const modelToUse = options.model || this.model;
       console.log(`🤖 [LLM] Using model: ${modelToUse}`);
@@ -144,7 +154,7 @@ class LLMService {
     }
   }
 
-  _buildPrompt(query, memories, conversationHistory, systemInstructions = '') {
+  _buildPrompt(query, memories, conversationHistory, webSearchResults = [], systemInstructions = '') {
     // Start with system instructions if provided (highest priority)
     let prompt = '';
     
@@ -156,11 +166,14 @@ class LLMService {
     // Enhanced system prompt with explicit memory usage instructions
     prompt += `You are an AI assistant helping a user. You have access to multiple context layers:
 
-1. **conversationHistory**: Recent back-and-forth messages (use for immediate context)
-2. **memories**: Long-term factual information about the user from previous conversations (use for questions about user preferences, history, or past statements)
+1. **webSearchResults**: Current information from the web (use for factual questions about the world)
+2. **conversationHistory**: Recent back-and-forth messages (use for immediate context and to recall what was discussed)
+3. **memories**: Long-term factual information about the user from previous conversations (use for questions about user preferences, history, or past statements)
 
 CRITICAL RULES:
 - Always respond from the ASSISTANT's perspective (use "you" for the user, never "I")
+- **PRONOUN RESOLUTION**: When the user uses pronouns like "he", "she", "it", "they", "him", "her", FIRST check the conversation history to identify who/what is being referenced BEFORE using web search results
+- When the user asks "what did we talk about" or "what have we discussed", REVIEW THE CONVERSATION HISTORY and summarize the topics
 - When the user asks "what do I like/love/prefer" or "what is my favorite", CHECK THE MEMORIES FIRST
 - If memories exist and are relevant, USE THEM in your response
 - If NO memories are provided or memories don't contain the answer, say "I don't have that information stored yet"
@@ -176,7 +189,17 @@ CRITICAL RULES:
     // Check if this is a factual query about user preferences
     const isFactualQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
     
-    // 1. Add system messages from conversation history (highest priority)
+    // 1. Add web search results if available (highest priority for factual questions)
+    if (webSearchResults && webSearchResults.length > 0) {
+      prompt += 'WEB SEARCH RESULTS (Current information from the internet):\n';
+      webSearchResults.forEach((result, idx) => {
+        prompt += `${idx + 1}. ${result.text}\n`;
+      });
+      prompt += '\nUse these web search results to answer the user\'s question with accurate, up-to-date information.\n\n';
+      console.log(`🌐 [GENERAL-ANSWER] Using ${webSearchResults.length} web search results`);
+    }
+    
+    // 2. Add system messages from conversation history
     if (conversationHistory && conversationHistory.length > 0) {
       const systemMessages = conversationHistory.filter(m => m.role === 'system');
       if (systemMessages.length > 0) {
@@ -187,7 +210,7 @@ CRITICAL RULES:
       }
     }
     
-    // 2. Add memory context if relevant (especially for factual queries)
+    // 3. Add memory context if relevant (especially for factual queries about the user)
     if (memories && memories.length > 0) {
       if (isFactualQuery) {
         prompt += 'RELEVANT MEMORIES ABOUT THE USER:\n';

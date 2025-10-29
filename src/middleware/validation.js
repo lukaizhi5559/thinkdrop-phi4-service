@@ -193,10 +193,41 @@ const validateEmbeddingRequest = (req, res, next) => {
   next();
 };
 
+const validateKnowledgeRequest = (req, res, next) => {
+  const { payload } = req.body;
+  
+  if (!payload.query) {
+    return res.status(400).json({
+      version: 'mcp.v1',
+      status: 'error',
+      error: {
+        code: 'INVALID_REQUEST',
+        message: 'Missing required field: query',
+        retryable: false
+      }
+    });
+  }
+  
+  if (typeof payload.query !== 'string') {
+    return res.status(400).json({
+      version: 'mcp.v1',
+      status: 'error',
+      error: {
+        code: 'INVALID_REQUEST',
+        message: 'Field "query" must be a string',
+        retryable: false
+      }
+    });
+  }
+  
+  next();
+};
+
 module.exports = {
   validateMCPRequest,
   validateIntentParseRequest,
   validateGeneralAnswerRequest,
   validateEntityExtractRequest,
-  validateEmbeddingRequest
+  validateEmbeddingRequest,
+  validateKnowledgeRequest
 };

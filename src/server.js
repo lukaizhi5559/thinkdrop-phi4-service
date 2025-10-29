@@ -24,6 +24,7 @@ const generalRoutes = require('./routes/general');
 const entityRoutes = require('./routes/entity');
 const embeddingRoutes = require('./routes/embedding');
 const parserRoutes = require('./routes/parser');
+const knowledgeRoutes = require('./routes/knowledge.cjs');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
@@ -87,6 +88,7 @@ app.use('/', validateApiKey, validateMCPRequest, generalRoutes);
 app.use('/', validateApiKey, validateMCPRequest, entityRoutes);
 app.use('/', validateApiKey, validateMCPRequest, embeddingRoutes);
 app.use('/', validateApiKey, validateMCPRequest, parserRoutes);
+app.use('/', validateApiKey, validateMCPRequest, knowledgeRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
@@ -115,6 +117,7 @@ async function startServer() {
       console.log('📊 Available Actions:');
       console.log('   - POST /intent.parse');
       console.log('   - POST /general.answer');
+      console.log('   - POST /knowledge.answer');
       console.log('   - POST /entity.extract');
       console.log('   - POST /embedding.generate');
       console.log('   - POST /parser.list');
