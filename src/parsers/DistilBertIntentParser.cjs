@@ -19,8 +19,9 @@ class DistilBertIntentParser {
     this.intentLabels = [
       'memory_store',
       'memory_retrieve',
+      'web_search',      // NEW: Factual queries requiring web search
       'command',
-      'question',
+      'question',        // General questions (not factual)
       'greeting',
       'context'
     ];
@@ -41,6 +42,18 @@ class DistilBertIntentParser {
         "When is Sarah's birthday?",
         "What's the project deadline?"
       ],
+      web_search: [
+        "What is the capital of France?",
+        "Who is the president of the United States?",
+        "What's the best currency in the world?",
+        "How much does a Tesla cost?",
+        "What's the weather in New York today?",
+        "When was the Declaration of Independence signed?",
+        "What's the latest news about AI?",
+        "Who invented the telephone?",
+        "What's the price of Bitcoin?",
+        "Where is the Eiffel Tower located?"
+      ],
       command: [
         "Take a screenshot",
         "Open Chrome",
@@ -49,11 +62,11 @@ class DistilBertIntentParser {
         "Play some music"
       ],
       question: [
-        "What is the capital of France?",
-        "How does photosynthesis work?",
-        "Why is the sky blue?",
-        "When was the Declaration of Independence signed?",
-        "Who invented the telephone?"
+        "How are you doing?",
+        "Can you help me with something?",
+        "What can you do?",
+        "Do you understand what I'm saying?",
+        "Are you able to assist me?"
       ],
       greeting: [
         "Hello",
