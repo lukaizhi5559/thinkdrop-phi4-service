@@ -43,15 +43,17 @@ class LLMService {
 
     const startTime = Date.now();
 
-    // Extract memories and conversation history from context
+    // Extract memories, conversation history, and system instructions from context
     const memories = options.context?.memories || [];
     const conversationHistory = options.context?.conversationHistory || [];
+    const systemInstructions = options.context?.systemInstructions || '';
     
     // Log memory usage
     console.log('📚 [GENERAL-ANSWER] Received request:', {
       query: query,
       memoryCount: memories.length,
-      conversationLength: conversationHistory.length
+      conversationLength: conversationHistory.length,
+      hasSystemInstructions: !!systemInstructions
     });
     
     if (memories.length > 0) {
@@ -68,7 +70,7 @@ class LLMService {
     }
 
     try {
-      const prompt = this._buildPrompt(query, memories, conversationHistory);
+      const prompt = this._buildPrompt(query, memories, conversationHistory, systemInstructions);
       
       const response = await axios.post(this.apiUrl, {
         model: options.model || this.model,
@@ -139,28 +141,81 @@ class LLMService {
     }
   }
 
-  _buildPrompt(query, memories, conversationHistory) {
-    // Build concise system instructions - no role labels to avoid simulation
-    let prompt = 'Answer the question naturally in 1-2 sentences. Do not simulate conversations or add role labels.\n\n';
+  _buildPrompt(query, memories, conversationHistory, systemInstructions = '') {
+    // Start with system instructions if provided (highest priority)
+    let prompt = '';
     
-    // Add memories if available
-    if (memories && memories.length > 0) {
-      prompt += 'Context:\n';
-      memories.forEach((m, idx) => {
-        // Extract just the key info from memory text
-        const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
-        prompt += `- ${memoryText}\n`;
-      });
-      prompt += '\n';
-      
-      console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories in prompt`);
-    } else {
-      console.log('⚠️ [GENERAL-ANSWER] No memories provided');
+    if (systemInstructions) {
+      prompt += `${systemInstructions}\n\n`;
+      console.log('📋 [GENERAL-ANSWER] Using system instructions from orchestrator');
     }
     
-    // Clean and add conversation history (last few exchanges only)
+    // Enhanced system prompt with explicit memory usage instructions
+    prompt += `You are an AI assistant helping a user. You have access to multiple context layers:
+
+1. **conversationHistory**: Recent back-and-forth messages (use for immediate context)
+2. **memories**: Long-term factual information about the user from previous conversations (use for questions about user preferences, history, or past statements)
+
+CRITICAL RULES:
+- Always respond from the ASSISTANT's perspective (use "you" for the user, never "I")
+- When the user asks "what do I like/love/prefer" or "what is my favorite", CHECK THE MEMORIES FIRST
+- If memories exist and are relevant, USE THEM in your response
+- If NO memories are provided or memories don't contain the answer, say "I don't have that information stored yet"
+- NEVER make up or invent information that isn't in the memories or conversation history
+- Answer naturally in 1-2 sentences
+- Do not simulate conversations or add role labels
+
+`;
+
+    // Check if this is a factual query about user preferences
+    const isFactualQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
+    
+    // 1. Add system messages from conversation history (highest priority)
     if (conversationHistory && conversationHistory.length > 0) {
-      const recentHistory = conversationHistory.slice(-4); // Only last 4 messages
+      const systemMessages = conversationHistory.filter(m => m.role === 'system');
+      if (systemMessages.length > 0) {
+        console.log(`📚 [GENERAL-ANSWER] Found ${systemMessages.length} system messages`);
+        systemMessages.forEach(msg => {
+          prompt += `${msg.content}\n\n`;
+        });
+      }
+    }
+    
+    // 2. Add memory context if relevant (especially for factual queries)
+    if (memories && memories.length > 0) {
+      if (isFactualQuery) {
+        prompt += 'RELEVANT MEMORIES ABOUT THE USER:\n';
+        memories.forEach((m, idx) => {
+          // Extract the user's statement from memory text
+          const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
+          prompt += `${idx + 1}. ${memoryText}\n`;
+        });
+        prompt += '\nUse these memories to answer the user\'s question. Speak from the assistant\'s perspective (use "you" for the user).\n\n';
+        console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories for factual query`);
+      } else {
+        // For non-factual queries, still include memories but less prominently
+        prompt += 'Context about the user:\n';
+        memories.forEach((m) => {
+          const memoryText = m.text.replace(/User asked: "|Assistant responded: "/g, '').split('\n')[0];
+          prompt += `- ${memoryText}\n`;
+        });
+        prompt += '\n';
+        console.log(`📚 [GENERAL-ANSWER] Using ${memories.length} memories as background context`);
+      }
+    } else {
+      // Explicitly tell the model there are NO memories
+      if (isFactualQuery) {
+        prompt += 'NO MEMORIES AVAILABLE: There are no stored memories about this topic. If the user asks about their preferences or past statements, respond: "I don\'t have that information stored yet."\n\n';
+        console.log('⚠️ [GENERAL-ANSWER] No memories provided - instructing model to admit lack of knowledge');
+      } else {
+        console.log('⚠️ [GENERAL-ANSWER] No memories provided');
+      }
+    }
+    
+    // 3. Add conversation history (excluding system messages)
+    if (conversationHistory && conversationHistory.length > 0) {
+      const dialogue = conversationHistory.filter(m => m.role !== 'system');
+      const recentHistory = dialogue.slice(-8); // Last 8 messages for better context
       const cleanedHistory = recentHistory.map(c => ({
         role: c.role,
         // Remove any [End] markers and meta-commentary from history
@@ -177,19 +232,20 @@ class LLMService {
       })).filter(c => c.content.length > 0); // Remove empty messages
       
       if (cleanedHistory.length > 0) {
-        prompt += 'Recent conversation:\n';
+        prompt += 'CONVERSATION:\n';
         cleanedHistory.forEach(c => {
-          const label = c.role === 'user' ? 'Q' : 'A';
+          const label = c.role === 'user' ? 'USER' : 'ASSISTANT';
           prompt += `${label}: ${c.content}\n`;
         });
         prompt += '\n';
       }
     }
     
-    // Add current query with clear instruction
-    prompt += `Question: ${query}\n\nAnswer (1-2 sentences only):`;
+    // 4. Add current query with clear instruction
+    prompt += `USER: ${query}\nASSISTANT:`;
     
     console.log('📚 [GENERAL-ANSWER] System prompt length:', prompt.length);
+    console.log('📚 [GENERAL-ANSWER] Is factual query:', isFactualQuery);
     
     return prompt;
   }
