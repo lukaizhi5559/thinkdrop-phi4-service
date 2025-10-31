@@ -215,6 +215,19 @@ const questionResponses = [
     "Let me provide a detailed answer."
 ];
 
+const webSearchResponses = [
+    "Searching the web for you...",
+    "Looking that up online...",
+    "Checking the latest information...",
+    "Searching for current data...",
+    "Finding the most up-to-date info...",
+    "Querying web sources...",
+    "Searching across the internet...",
+    "Looking for the latest results...",
+    "Gathering information from the web...",
+    "Checking online resources..."
+];
+
 const greetingResponses = [
     "Hello! How can I help you today?",
     "Hi there! What can I do for you?",
@@ -291,6 +304,9 @@ const IntentResponses = {
       case 'greeting':
         return this._getGreetingResponse(message);
 
+      case 'web_search':
+        return this._getWebSearchResponse(message);
+
       case 'context':
         return this._getContextResponse(message);
 
@@ -356,6 +372,12 @@ const IntentResponses = {
     return greetingResponses[randomIndex];
   },
 
+  _getWebSearchResponse(_message) {
+    // Use random web search response for variety
+    const randomIndex = Math.floor(Math.random() * webSearchResponses.length);
+    return webSearchResponses[randomIndex];
+  },
+
   _getContextResponse(_message) {
     return "Let me review our conversation history...";
   },
@@ -363,6 +385,28 @@ const IntentResponses = {
   _getFarewellResponse(_message) {
     return "Goodbye! Have a great day!";
   },
+
+  /**
+   * Get node-specific progress message
+   * @param {string} nodeName - Name of the node being executed
+   * @param {Object} state - Current state
+   * @returns {string} Progress message
+   */
+  getNodeProgressMessage(nodeName, state = {}) {
+    const nodeMessages = {
+      parseIntent: "Understanding your request...",
+      webSearch: "Searching the web...",
+      sanitizeWeb: "Processing search results...",
+      retrieveMemory: "Checking your memories...",
+      filterMemory: "Filtering relevant information...",
+      answer: "Generating response...",
+      validateAnswer: "Validating answer quality...",
+      storeConversation: "Saving conversation...",
+      storeMemory: "Storing information..."
+    };
+
+    return nodeMessages[nodeName] || `Processing ${nodeName}...`;
+  }
 };
 
 module.exports = IntentResponses;

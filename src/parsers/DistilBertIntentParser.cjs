@@ -251,11 +251,24 @@ class DistilBertIntentParser {
   applyEntityBoosting(scores, entities, message) {
     const lowerMessage = message.toLowerCase();
     
-    // Boost memory_store if has future temporal markers + entities
+    // Detect if this is a question (WH-word or question mark)
+    const hasQuestionWord = lowerMessage.match(/^(what|when|where|who|which|why|how|whose|whom|can|could|would|should|is|are|do|does|did)/i);
+    const hasQuestionMark = message.trim().endsWith('?');
+    const isQuestion = hasQuestionWord || hasQuestionMark;
+    
+    // Detect explicit storage verbs
+    const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|keep in mind|write down|jot down)\b/);
+    
+    // Boost memory_store ONLY if has storage verbs AND not a question
     if (entities.some(e => e.type === 'datetime' || e.type === 'person')) {
-      if (lowerMessage.match(/remember|save|note|don't forget|keep in mind/)) {
+      if (hasStorageVerb && !isQuestion) {
         scores.memory_store *= 1.2;
       }
+    }
+    
+    // Penalize memory_store for questions (critical fix)
+    if (isQuestion && !hasStorageVerb) {
+      scores.memory_store *= 0.3; // Strong penalty
     }
     
     // Boost memory_retrieve if asking about stored information
@@ -270,9 +283,23 @@ class DistilBertIntentParser {
       scores.command *= 1.25;
     }
     
-    // Boost question if ends with question mark
-    if (message.trim().endsWith('?')) {
+    // Boost question/web_search for WH-questions
+    if (hasQuestionWord) {
+      // Check if it's a factual question (likely needs web search)
+      const isFactualQuestion = lowerMessage.match(/\b(who is|what is|when did|where is|how much|how many|what's the|who's the|when was|where was)\b/);
+      
+      if (isFactualQuestion) {
+        scores.web_search *= 1.3;
+        scores.question *= 1.15;
+      } else {
+        scores.question *= 1.2;
+      }
+    }
+    
+    // Additional boost if ends with question mark
+    if (hasQuestionMark) {
       scores.question *= 1.1;
+      scores.web_search *= 1.05;
     }
     
     // Boost greeting if message is very short and contains greeting words
@@ -292,13 +319,40 @@ class DistilBertIntentParser {
   }
 
   getTopIntent(scores) {
-    let topIntent = 'question'; // Default
-    let topScore = 0;
+    // Sort intents by score
+    const sortedIntents = Object.entries(scores)
+      .sort((a, b) => b[1] - a[1]);
     
-    for (const [intent, score] of Object.entries(scores)) {
-      if (score > topScore) {
-        topScore = score;
-        topIntent = intent;
+    const topIntent = sortedIntents[0][0];
+    const topScore = sortedIntents[0][1];
+    const secondScore = sortedIntents[1]?.[1] || 0;
+    
+    // Intent priority for tie-breaking (when scores are very close)
+    const intentPriority = {
+      'web_search': 5,      // Highest priority for factual questions
+      'question': 4,        // General questions
+      'memory_retrieve': 3, // Retrieving stored info
+      'command': 2,
+      'context': 1,
+      'memory_store': 0,    // Lowest priority (avoid false positives)
+      'greeting': 0
+    };
+    
+    // If top score is very low (< 0.4), default to question
+    if (topScore < 0.4) {
+      console.log(`⚠️ Low confidence (${topScore.toFixed(3)}), defaulting to 'question'`);
+      return 'question';
+    }
+    
+    // If scores are very close (within 0.1), use priority
+    if (Math.abs(topScore - secondScore) < 0.1) {
+      const topPriority = intentPriority[topIntent] || 0;
+      const secondIntent = sortedIntents[1][0];
+      const secondPriority = intentPriority[secondIntent] || 0;
+      
+      if (secondPriority > topPriority) {
+        console.log(`🔄 Tie-breaking: ${topIntent} (${topScore.toFixed(3)}) vs ${secondIntent} (${secondScore.toFixed(3)}) → choosing ${secondIntent} (higher priority)`);
+        return secondIntent;
       }
     }
     
