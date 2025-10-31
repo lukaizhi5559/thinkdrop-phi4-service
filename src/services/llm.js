@@ -279,6 +279,123 @@ CRITICAL RULES:
     return prompt;
   }
 
+  async generateAnswerStream(query, options = {}, onToken) {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+
+    // Extract context same as non-streaming
+    const memories = options.context?.memories || [];
+    const conversationHistory = options.context?.conversationHistory || [];
+    const webSearchResults = options.context?.webSearchResults || [];
+    const systemInstructions = options.context?.systemInstructions || '';
+    
+    console.log('🌊 [STREAM] Starting streaming response for:', query.substring(0, 50));
+
+    if (!this.enabled) {
+      // Send placeholder response token by token for testing
+      const placeholder = `This is a placeholder streaming response for: "${query}".`;
+      for (const char of placeholder) {
+        onToken({ token: char });
+        await new Promise(resolve => setTimeout(resolve, 10)); // Simulate streaming
+      }
+      return;
+    }
+
+    try {
+      const prompt = this._buildPrompt(query, memories, conversationHistory, webSearchResults, systemInstructions);
+      const modelToUse = options.model || this.model;
+
+      // Make streaming request to Ollama
+      const response = await axios.post(this.apiUrl, {
+        model: modelToUse,
+        prompt: prompt,
+        stream: true, // ⚡ Enable streaming
+        options: {
+          temperature: options.temperature || 0.7,
+          num_predict: options.maxTokens || 150,
+          top_k: options.topK || 40,
+          top_p: options.topP || 0.9,
+          num_ctx: options.contextLength || 2048,
+          stop: [
+            '\\n\\nUser:',
+            '\\nUser:',
+            '\\nUSER:',
+            'USER:',
+            '\\nuser:',
+            'user:',
+            '\\nAssistant:',
+            '\\nASSISTANT:',
+            'ASSISTANT:',
+            '\\nassistant:',
+            'assistant:',
+            '**[End',
+            '[End',
+            '*Note',
+            'Note to developers',
+            '\\n\\n###',
+            'The user asked',
+            'The assistant'
+          ]
+        }
+      }, {
+        responseType: 'stream',
+        timeout: options.timeout || 60000
+      });
+
+      // Process stream line by line
+      return new Promise((resolve, reject) => {
+        let buffer = '';
+
+        response.data.on('data', (chunk) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\\n');
+          
+          // Keep last incomplete line in buffer
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const data = JSON.parse(line);
+                if (data.response) {
+                  // Send token to callback
+                  onToken({ token: data.response });
+                }
+                
+                if (data.done) {
+                  console.log('✅ [STREAM] Streaming complete');
+                  resolve();
+                }
+              } catch (err) {
+                console.warn('⚠️ [STREAM] Failed to parse line:', line);
+              }
+            }
+          }
+        });
+
+        response.data.on('end', () => {
+          resolve();
+        });
+
+        response.data.on('error', (err) => {
+          console.error('❌ [STREAM] Stream error:', err);
+          reject(err);
+        });
+      });
+
+    } catch (error) {
+      console.error('❌ [STREAM] Streaming failed:', error.message);
+      
+      // Fallback: send error message as stream
+      const errorMsg = `Error generating response: ${error.message}`;
+      for (const char of errorMsg) {
+        onToken({ token: char });
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    }
+  }
+
   _calculateConfidence(ollamaResponse) {
     // Simple confidence calculation based on response completeness
     if (ollamaResponse.done && ollamaResponse.response) {
