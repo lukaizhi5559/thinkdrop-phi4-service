@@ -91,10 +91,10 @@ class LLMService {
         stream: false,
         options: {
           temperature: options.temperature || 0.7,  // Natural, varied responses
-          num_predict: options.maxTokens || 150,    // Enough for complete thoughts
+          num_predict: options.maxTokens || 500,    // Enough for complete thoughts
           top_k: options.topK || 40,
           top_p: options.topP || 0.9,
-          num_ctx: options.contextLength || 2048,
+          num_ctx: options.contextLength || 8192,   // Larger context window for conversation history
           stop: [
             '\n\nUser:',
             '\nUser:',
@@ -186,8 +186,12 @@ CRITICAL RULES:
 
 `;
 
-    // Check if this is a factual query about user preferences
-    const isFactualQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
+    // Check if this is a factual query
+    // BEST INDICATOR: If web search results are present, it's DEFINITELY a factual query
+    // Otherwise, check if it's a user preference query using patterns
+    const hasWebResults = webSearchResults && webSearchResults.length > 0;
+    const isUserPreferenceQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
+    const isFactualQuery = hasWebResults || isUserPreferenceQuery;
     
     // 1. Add web search results if available (highest priority for factual questions)
     if (webSearchResults && webSearchResults.length > 0) {
@@ -233,19 +237,49 @@ CRITICAL RULES:
       }
     } else {
       // Explicitly tell the model there are NO memories
+      // BUT: Only add "search online" instruction if there are ALSO no web results
       if (isFactualQuery) {
-        prompt += 'NO MEMORIES AVAILABLE: There are no stored memories about this topic. If the user asks about their preferences or past statements, respond: "I don\'t have that information stored yet."\n\n';
-        console.log('⚠️ [GENERAL-ANSWER] No memories provided - instructing model to admit lack of knowledge');
+        if (webSearchResults && webSearchResults.length > 0) {
+          // Web results are available, so don't suggest searching
+          prompt += 'NO MEMORIES AVAILABLE: There are no stored memories about the user.\n\nIMPORTANT: Use the web search results provided above to answer factual questions.\n\n';
+          console.log('⚠️ [GENERAL-ANSWER] No memories, but web results available - instructing to use web results');
+        } else {
+          // No web results AND no memories - suggest searching
+          prompt += 'NO MEMORIES AVAILABLE: There are no stored memories about the user.\n\nIMPORTANT DISTINCTION:\n- If the user asks about THEIR OWN preferences/past statements (e.g., "what do I like", "what did I say"), respond: "I don\'t have that information stored yet."\n- If the user asks about FACTUAL INFORMATION about the world (e.g., "who is X", "what is Y", "how old is Z"), respond: "I need to search online for that information. Let me look that up for you."\n\n';
+          console.log('⚠️ [GENERAL-ANSWER] No memories or web results - instructing model to distinguish personal vs factual queries');
+        }
       } else {
         console.log('⚠️ [GENERAL-ANSWER] No memories provided');
       }
     }
     
-    // 3. Add conversation history (excluding system messages)
+    // 3. Add conversation history with hybrid approach:
+    //    - Always include last 6 messages (3 turns) for immediate context
+    //    - Include up to 8 additional relevant messages if they mention similar topics
     if (conversationHistory && conversationHistory.length > 0) {
       const dialogue = conversationHistory.filter(m => m.role !== 'system');
-      const recentHistory = dialogue.slice(-8); // Last 8 messages for better context
-      const cleanedHistory = recentHistory.map(c => ({
+      
+      // Always get last 6 messages (immediate context)
+      const recentMessages = dialogue.slice(-6);
+      
+      // Get older messages (if any) for relevance filtering
+      const olderMessages = dialogue.slice(0, -6);
+      
+      // Simple keyword-based relevance: check if older messages share keywords with current query
+      const queryKeywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const relevantOlderMessages = olderMessages
+        .filter(m => {
+          const content = m.content.toLowerCase();
+          // Message is relevant if it shares 2+ keywords with current query
+          const sharedKeywords = queryKeywords.filter(kw => content.includes(kw));
+          return sharedKeywords.length >= 2;
+        })
+        .slice(-8); // Max 8 additional relevant messages
+      
+      // Combine: relevant older messages + recent messages
+      const contextMessages = [...relevantOlderMessages, ...recentMessages];
+      
+      const cleanedHistory = contextMessages.map(c => ({
         role: c.role,
         // Remove any [End] markers and meta-commentary from history
         content: c.content
@@ -267,6 +301,7 @@ CRITICAL RULES:
           prompt += `${label}: ${c.content}\n`;
         });
         prompt += '\n';
+        console.log(`📚 [GENERAL-ANSWER] Using ${cleanedHistory.length} messages (${recentMessages.length} recent + ${relevantOlderMessages.length} relevant older)`);
       }
     }
     
@@ -313,27 +348,27 @@ CRITICAL RULES:
         stream: true, // ⚡ Enable streaming
         options: {
           temperature: options.temperature || 0.7,
-          num_predict: options.maxTokens || 150,
+          num_predict: options.maxTokens || 500,
           top_k: options.topK || 40,
           top_p: options.topP || 0.9,
-          num_ctx: options.contextLength || 2048,
+          num_ctx: options.contextLength || 8192,
           stop: [
-            '\\n\\nUser:',
-            '\\nUser:',
-            '\\nUSER:',
+            '\n\nUser:',
+            '\nUser:',
+            '\nUSER:',
             'USER:',
-            '\\nuser:',
+            '\nuser:',
             'user:',
-            '\\nAssistant:',
-            '\\nASSISTANT:',
+            '\nAssistant:',
+            '\nASSISTANT:',
             'ASSISTANT:',
-            '\\nassistant:',
+            '\nassistant:',
             'assistant:',
             '**[End',
             '[End',
             '*Note',
             'Note to developers',
-            '\\n\\n###',
+            '\n\n###',
             'The user asked',
             'The assistant'
           ]
@@ -349,7 +384,7 @@ CRITICAL RULES:
 
         response.data.on('data', (chunk) => {
           buffer += chunk.toString();
-          const lines = buffer.split('\\n');
+          const lines = buffer.split('\n');
           
           // Keep last incomplete line in buffer
           buffer = lines.pop() || '';
@@ -361,6 +396,7 @@ CRITICAL RULES:
                 if (data.response) {
                   // Send token to callback
                   onToken({ token: data.response });
+                  console.log('🌊 [STREAM] Token:', data.response.substring(0, 20));
                 }
                 
                 if (data.done) {

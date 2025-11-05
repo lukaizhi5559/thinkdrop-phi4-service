@@ -3,7 +3,9 @@
  * Main server file
  */
 
-require('dotenv').config();
+const path = require('path');
+// Load .env from the phi4 service directory, not the project root
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 require('./utils/transformers-config.cjs');
 
 const express = require('express');

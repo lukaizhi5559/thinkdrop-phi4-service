@@ -15,72 +15,191 @@ class DistilBertIntentParser {
     this.nerClassifier = null;
     this.initialized = false;
     
-    // Intent labels
+    // Intent labels (expanded with general_knowledge)
     this.intentLabels = [
       'memory_store',
       'memory_retrieve',
-      'web_search',      // NEW: Factual queries requiring web search
+      'web_search',         // Time-sensitive queries requiring current data
+      'general_knowledge',  // Stable facts that don't need web search
       'command',
-      'question',        // General questions (not factual)
+      'question',           // Capability queries and general questions
       'greeting',
       'context'
     ];
     
-    // Seed examples for each intent (pre-computed embeddings will be cached)
+    // Seed examples for each intent (expanded with paraphrases, edge cases, hard negatives)
+    // Aim: 15-25 diverse examples per intent for robust classification
     this.seedExamples = {
       memory_store: [
         "Remember I have a meeting with John tomorrow at 3pm",
         "Save this: I need to buy milk and eggs",
         "Don't forget my dentist appointment on Friday",
         "Keep in mind that Sarah's birthday is next week",
-        "Note that the project deadline is October 15th"
+        "Note that the project deadline is October 15th",
+        "Remember: reschedule eye exam to Nov 12 at 2:30pm",
+        "Save this note—server beta key is F9A3-22Q",
+        "Keep track that my passport expires in March",
+        "Note Chloe's ukulele recital is Saturday 6pm",
+        "Store my Wi-Fi: SSID 'Home5G', pass 'orchid77'",
+        "Log that I ran 3 miles today",
+        "Don't forget mom's flight lands 7:45am Friday",
+        "Add: renew AWS cert before 10/31",
+        "Please remember I prefer dark mode",
+        "Save my shoe size: US 10.5",
+        "Keep in mind I'm allergic to peanuts",
+        "Note down my car's VIN number",
+        "Remember my favorite coffee is oat milk latte"
       ],
       memory_retrieve: [
         "What meetings do I have tomorrow?",
         "When is my dentist appointment?",
         "What did I need to buy at the store?",
         "When is Sarah's birthday?",
-        "What's the project deadline?"
+        "What's the project deadline?",
+        "What did I say my Wi-Fi password is?",
+        "When's mom's flight again?",
+        "Show my tasks for tomorrow",
+        "Do you remember my passport expiry?",
+        "Pull up my saved server beta key",
+        "What time is Chloe's recital?",
+        "List the notes I added today",
+        "Did I log a run this week?",
+        "What preferences have I set?",
+        "When is the AWS cert due?",
+        "What's my shoe size?",
+        "What am I allergic to?",
+        "What's my car's VIN?"
       ],
       web_search: [
-        "What is the capital of France?",
+        // Current leadership and positions
         "Who is the president of the United States?",
-        "What's the best currency in the world?",
+        "Who is the current president of USA?",
+        "Who's the prime minister of UK right now?",
+        "Who is the current CEO of Apple?",
+        "Who is the governor of California?",
+        "Who's the current CEO of OpenAI?",
+        // Current prices and stocks
         "How much does a Tesla cost?",
-        "What's the weather in New York today?",
-        "When was the Declaration of Independence signed?",
-        "What's the latest news about AI?",
-        "Who invented the telephone?",
         "What's the price of Bitcoin?",
-        "Where is the Eiffel Tower located?"
+        "BTC price right now?",
+        "What's the current stock price of Apple?",
+        "How much does gas cost today?",
+        "Gas prices near me",
+        // Weather and current conditions
+        "What's the weather in New York today?",
+        "What's the weather like now?",
+        "Weather in Philly today",
+        "What's the temperature today?",
+        // Recent news and events
+        "What's the latest news about AI?",
+        "Latest news on GPT-5?",
+        "What happened today?",
+        "What's the latest news?",
+        "New Node.js LTS version",
+        // Sports scores and results
+        "What's the score of the game?",
+        "Eagles score tonight",
+        "Who won the Super Bowl?",
+        "Who won yesterday's World Series game?",
+        // Time-sensitive queries
+        "When is the next election?",
+        "What time is it in London?",
+        "When does Costco close today?",
+        "When is Diwali this year?",
+        "US CPI print date this month",
+        // Code and tutorial requests (need web search for examples/docs)
+        "Give me a Python script that can interface with audio for browser",
+        "Show me how to use WebSockets in Node.js",
+        "How do I create a REST API in Flask?",
+        "Give me an example of async/await in JavaScript",
+        "Show me code for reading CSV files in Python",
+        "How do I connect to MongoDB in Node.js?",
+        "Give me a script to scrape websites with Python",
+        "Show me how to use React hooks",
+        "How do I deploy a Docker container?",
+        "Give me code for file upload in Express"
+      ],
+      general_knowledge: [
+        // Stable facts that don't change
+        "What is the capital of France?",
+        "Where is the Eiffel Tower located?",
+        "When was the Declaration of Independence signed?",
+        "Who invented the telephone?",
+        "What is a VPC in AWS?",
+        "Explain CAP theorem simply",
+        "What's Big-O for binary search?",
+        "How does JWT work?",
+        "What is Terraform state?",
+        "Explain event sourcing",
+        "What is a Merkle tree?",
+        "Difference between TCP and UDP?",
+        "How do you write a function in Rust?",
+        "What's the syntax for a for loop in Python?",
+        "What is the speed of light?",
+        "How many continents are there?",
+        "What is photosynthesis?",
+        "Who wrote Romeo and Juliet?"
       ],
       command: [
         "Take a screenshot",
         "Open Chrome",
         "Close all windows",
         "Search for restaurants nearby",
-        "Play some music"
+        "Play some music",
+        "Open VS Code",
+        "Start a 25-minute timer",
+        "Mute system volume",
+        "Create a new note titled 'Ideas'",
+        "Switch to dark mode",
+        "Play Lo-fi beats",
+        "Close all Chrome tabs",
+        "Launch Docker Desktop",
+        "Copy the last transcript to clipboard",
+        "Set an alarm for 7am"
       ],
       question: [
+        // Capability queries and general questions
         "How are you doing?",
         "Can you help me with something?",
         "What can you do?",
         "Do you understand what I'm saying?",
-        "Are you able to assist me?"
+        "Are you able to assist me?",
+        "What can you do with my calendar?",
+        "Can you browse the web?",
+        "Can you remember things long-term?",
+        "Can you run local scripts?",
+        "Can you summarize PDFs?",
+        "Are you able to control apps?",
+        "How do I use this feature?",
+        "What are your capabilities?",
+        "Can you explain how this works?"
       ],
       greeting: [
         "Hello",
         "Hi there",
         "Good morning",
         "Good afternoon",
-        "Hey, how are you?"
+        "Hey, how are you?",
+        "Hey! 👋",
+        "Good evening",
+        "How's it going?",
+        "Yo!",
+        "Thanks a lot!",
+        "Appreciate it",
+        "Sup"
       ],
       context: [
         "What did we talk about earlier?",
         "What was I saying before?",
         "Can you remind me of our conversation?",
         "What were we discussing?",
-        "Go back to what we were talking about"
+        "Go back to what we were talking about",
+        "What were we discussing before this?",
+        "Summarize our last session",
+        "Remind me what I asked 10 minutes ago",
+        "Continue from where we left off",
+        "What's the plan we outlined earlier?",
+        "Show me the earlier steps"
       ]
     };
     
@@ -296,6 +415,55 @@ class DistilBertIntentParser {
       }
     }
     
+    // 🔍 ENHANCED: Boost web_search for current events and time-sensitive queries
+    const hasCurrentEventIndicators = lowerMessage.match(/\b(current|now|today|latest|recent|this year|2024|2025|2026)\b/);
+    const hasLeadershipQuery = lowerMessage.match(/\b(president|prime minister|ceo|leader|governor|mayor|king|queen)\b/);
+    const hasPriceQuery = lowerMessage.match(/\b(price|cost|stock|worth|value|how much)\b/);
+    const hasWeatherQuery = lowerMessage.match(/\b(weather|temperature|forecast|rain|snow|sunny|cloudy)\b/);
+    const hasNewsQuery = lowerMessage.match(/\b(news|latest|happened|happening|event|announcement)\b/);
+    const hasSportsQuery = lowerMessage.match(/\b(score|game|match|won|lost|team|player)\b/);
+    
+    // 🔍 NEW: Boost web_search for code/tutorial requests
+    const hasCodeRequest = lowerMessage.match(/\b(give me|show me|how do i|how to|example of|tutorial|code for|script)\b/);
+    const hasProgrammingContext = lowerMessage.match(/\b(python|javascript|node|react|api|function|class|code|script|program|html|css|sql|database|docker|kubernetes)\b/);
+    
+    // Strong boost for current events
+    if (hasCurrentEventIndicators) {
+      scores.web_search *= 1.5;
+    }
+    
+    // Boost for leadership queries (often need current info)
+    if (hasLeadershipQuery && (hasQuestionWord || hasQuestionMark)) {
+      scores.web_search *= 1.4;
+    }
+    
+    // Boost for price/cost queries (always need current data)
+    if (hasPriceQuery) {
+      scores.web_search *= 1.45;
+    }
+    
+    // Boost for weather queries (always need current data)
+    if (hasWeatherQuery) {
+      scores.web_search *= 1.6;
+    }
+    
+    // Boost for news queries
+    if (hasNewsQuery) {
+      scores.web_search *= 1.5;
+    }
+    
+    // Boost for sports queries
+    if (hasSportsQuery) {
+      scores.web_search *= 1.4;
+    }
+    
+    // 🔍 NEW: Strong boost for code/tutorial requests
+    if (hasCodeRequest && hasProgrammingContext) {
+      scores.web_search *= 1.6;  // Strong boost
+      scores.command *= 0.5;      // Penalize command (avoid confusion)
+      scores.question *= 0.7;     // Slightly penalize generic question
+    }
+    
     // Additional boost if ends with question mark
     if (hasQuestionMark) {
       scores.question *= 1.1;
@@ -338,9 +506,10 @@ class DistilBertIntentParser {
       'greeting': 0
     };
     
-    // If top score is very low (< 0.4), default to question
-    if (topScore < 0.4) {
-      console.log(`⚠️ Low confidence (${topScore.toFixed(3)}), defaulting to 'question'`);
+    // Only default to question if ALL scores are extremely low (< 0.15)
+    // This prevents defaulting when web_search has highest score but low confidence
+    if (topScore < 0.15) {
+      console.log(`⚠️ Extremely low confidence (${topScore.toFixed(3)}), defaulting to 'question'`);
       return 'question';
     }
     

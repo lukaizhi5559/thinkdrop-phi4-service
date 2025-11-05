@@ -55,6 +55,11 @@ class EntityExtractionService {
   }
 
   mapEntityType(nerType) {
+    // Handle undefined or null nerType
+    if (!nerType) {
+      return 'other';
+    }
+    
     const mapping = {
       'PER': 'person',
       'PERSON': 'person',

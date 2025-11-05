@@ -20,7 +20,12 @@ class HybridIntentParser {
       { text: "Remember I have a meeting tomorrow", intent: "memory_store" },
       { text: "What meetings do I have?", intent: "memory_retrieve" },
       { text: "Take a screenshot", intent: "command" },
-      { text: "What is the capital of France?", intent: "question" },
+      { text: "What is the capital of France?", intent: "web_search" },
+      { text: "Who is the strongest man that ever lived?", intent: "web_search" },
+      { text: "How old is the president?", intent: "web_search" },
+      { text: "What is the weather today?", intent: "web_search" },
+      { text: "Tell me about quantum physics", intent: "web_search" },
+      { text: "What did I say?", intent: "question" },
       { text: "Hello there", intent: "greeting" },
       { text: "What did we discuss earlier?", intent: "context" }
     ];
@@ -140,7 +145,8 @@ class HybridIntentParser {
       memory_store: ["Remember I have a meeting tomorrow"],
       memory_retrieve: ["What meetings do I have?"],
       command: ["Take a screenshot"],
-      question: ["What is the capital of France?"],
+      web_search: ["What is the capital of France?", "Who is the strongest man?", "How old is the president?"],
+      question: ["What did I say?"],
       greeting: ["Hello there"],
       context: ["What did we discuss earlier?"]
     };
@@ -194,6 +200,7 @@ class HybridIntentParser {
       memory_store: 0,
       memory_retrieve: 0,
       command: 0,
+      web_search: 0,
       question: 0,
       greeting: 0,
       context: 0
@@ -214,9 +221,19 @@ class HybridIntentParser {
       scores.command += 0.7;
     }
     
-    // Question patterns
-    if (doc.has('#Question') || lowerMessage.includes('?')) {
-      scores.question += 0.4;
+    // Web search patterns - factual questions about the world
+    if (lowerMessage.match(/^(who is|what is|how old|when did|where is|which|tell me about|strongest|tallest|biggest|oldest|youngest)/)) {
+      scores.web_search += 0.7;
+    }
+    if (lowerMessage.match(/\b(president|prime minister|capital|country|city|person|man|woman|world|history|science|famous)\b/)) {
+      scores.web_search += 0.3;
+    }
+    
+    // Question patterns - meta-questions about conversation
+    if (lowerMessage.match(/what did (i|we)|what have (i|we)|my (preference|favorite)|do i like/)) {
+      scores.question += 0.7;
+    } else if (doc.has('#Question') || lowerMessage.includes('?')) {
+      scores.question += 0.2;
     }
     
     // Greeting patterns
@@ -248,7 +265,7 @@ class HybridIntentParser {
   }
 
   getTopIntent(scores) {
-    let topIntent = 'question';
+    let topIntent = 'web_search'; // Default to web_search for factual questions
     let topScore = 0;
     
     for (const [intent, score] of Object.entries(scores)) {
