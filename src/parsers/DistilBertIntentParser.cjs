@@ -8,11 +8,11 @@
 const { pipeline } = require('@xenova/transformers');
 const MathUtils = require('../utils/MathUtils.cjs');
 const IntentResponses = require('../utils/IntentResponses.cjs');
+const nlp = require('compromise');
 
 class DistilBertIntentParser {
   constructor() {
     this.embedder = null;
-    this.nerClassifier = null;
     this.initialized = false;
     
     // Intent labels (expanded with general_knowledge)
@@ -48,7 +48,12 @@ class DistilBertIntentParser {
         "Save my shoe size: US 10.5",
         "Keep in mind I'm allergic to peanuts",
         "Note down my car's VIN number",
-        "Remember my favorite coffee is oat milk latte"
+        "Remember my favorite coffee is oat milk latte",
+        "Set a reminder for my dentist appointment next Friday at 3pm",
+        "Remind me about the meeting tomorrow at 10am",
+        "I have an appointment next week on Tuesday. Set a reminder",
+        "Create a reminder for my doctor's appointment on Monday",
+        "I need a reminder for the team standup at 9am tomorrow"
       ],
       memory_retrieve: [
         "What meetings do I have tomorrow?",
@@ -213,19 +218,12 @@ class DistilBertIntentParser {
     const startTime = Date.now();
     
     try {
-      // Load embedding model
+      // Load embedding model (only model we need - Compromise handles entities)
       console.log('  Loading embedding model...');
       this.embedder = await pipeline(
         'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2'
-      );
-      
-      // Load NER classifier
-      console.log('  Loading NER classifier...');
-      this.nerClassifier = await pipeline(
-        'token-classification',
-        'Xenova/bert-base-multilingual-cased-ner-hrl',
-        { grouped_entities: true }
+        'Xenova/all-MiniLM-L6-v2',
+        { quantized: true }
       );
       
       // Pre-compute seed embeddings
@@ -233,8 +231,7 @@ class DistilBertIntentParser {
       await this.computeSeedEmbeddings();
       
       this.initialized = true;
-      const elapsed = Date.now() - startTime;
-      console.log(`✅ DistilBertIntentParser initialized in ${elapsed}ms`);
+      console.log(`✅ DistilBertIntentParser initialized in ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('❌ Failed to initialize DistilBertIntentParser:', error);
       throw error;
@@ -266,22 +263,140 @@ class DistilBertIntentParser {
 
   async extractEntities(message) {
     try {
-      const nerResults = await this.nerClassifier(message);
+      const entities = [];
+      const doc = nlp(message);
       
-      const entities = nerResults.map(entity => ({
-        type: this.mapEntityType(entity.entity_group),
-        value: entity.word,
-        entity_type: entity.entity_group,
-        confidence: entity.score,
-        start: entity.start,
-        end: entity.end
-      }));
+      // Extract named entities using Compromise (much faster than BERT NER)
+      // People
+      const people = doc.people().json();
+      people.forEach(person => {
+        entities.push({
+          type: 'person',
+          value: person.text,
+          entity_type: 'PERSON',
+          confidence: 0.9,
+          start: person.offset?.start || 0,
+          end: person.offset?.start ? person.offset.start + person.text.length : person.text.length
+        });
+      });
+      
+      // Places
+      const places = doc.places().json();
+      places.forEach(place => {
+        entities.push({
+          type: 'location',
+          value: place.text,
+          entity_type: 'LOCATION',
+          confidence: 0.9,
+          start: place.offset?.start || 0,
+          end: place.offset?.start ? place.offset.start + place.text.length : place.text.length
+        });
+      });
+      
+      // Organizations
+      const orgs = doc.organizations().json();
+      orgs.forEach(org => {
+        entities.push({
+          type: 'organization',
+          value: org.text,
+          entity_type: 'ORGANIZATION',
+          confidence: 0.9,
+          start: org.offset?.start || 0,
+          end: org.offset?.start ? org.offset.start + org.text.length : org.text.length
+        });
+      });
+      
+      // Extract appointment types and medical specialties
+      const appointmentTypes = doc.match('(dentist|doctor|vision|eye|dental|medical|therapy|physical|checkup|exam|appointment) (appt|appointment|visit|exam|checkup)?').json();
+      appointmentTypes.forEach(appt => {
+        entities.push({
+          type: 'appointment_type',
+          value: appt.text,
+          entity_type: 'APPOINTMENT',
+          confidence: 0.9,
+          start: appt.offset?.start || 0,
+          end: appt.offset?.start ? appt.offset.start + appt.text.length : appt.text.length
+        });
+      });
+      
+      // Add temporal entities (dates and times)
+      const temporalEntities = this.extractTemporalEntities(message);
+      entities.push(...temporalEntities);
       
       return entities;
     } catch (error) {
       console.warn('Entity extraction failed:', error.message);
       return [];
     }
+  }
+
+  extractTemporalEntities(message) {
+    const entities = [];
+    
+    try {
+      const doc = nlp(message);
+      
+      // Extract dates - use match patterns for dates
+      const datePatterns = [
+        '#Date',           // "tomorrow", "January 5th", "next week"
+        '#Month #Value',   // "January 5"
+        'next #Duration',  // "next week", "next month"
+        'the #Ordinal',    // "the 3rd", "the 15th"
+        '#WeekDay',        // "Monday", "Wednesday"
+        // Custom patterns for day abbreviations
+        'the? (mon|tues|tue|wed|thur|thu|fri|sat|sun)',  // "the Thur", "Mon", etc.
+        '(monday|tuesday|wednesday|thursday|friday|saturday|sunday)',
+        '(next|this|last) (monday|tuesday|wednesday|thursday|friday|saturday|sunday)'
+      ];
+      
+      datePatterns.forEach(pattern => {
+        const matches = doc.match(pattern).json();
+        matches.forEach(match => {
+          // Avoid duplicates
+          const alreadyExists = entities.some(e => e.value === match.text);
+          if (!alreadyExists) {
+            entities.push({
+              type: 'datetime',
+              value: match.text,
+              entity_type: 'DATE',
+              confidence: 0.95,
+              start: match.offset?.start || 0,
+              end: match.offset?.start ? match.offset.start + match.text.length : match.text.length
+            });
+          }
+        });
+      });
+      
+      // Extract times
+      const timePatterns = [
+        '#Time',                    // "3pm", "noon"
+        '#Value (am|pm|oclock)',    // "3 pm", "three oclock"
+        'at #Value',                // "at three"
+        '#Value #Time'              // "3 o'clock"
+      ];
+      
+      timePatterns.forEach(pattern => {
+        const matches = doc.match(pattern).json();
+        matches.forEach(match => {
+          const alreadyExists = entities.some(e => e.value === match.text);
+          if (!alreadyExists) {
+            entities.push({
+              type: 'datetime',
+              value: match.text,
+              entity_type: 'TIME',
+              confidence: 0.95,
+              start: match.offset?.start || 0,
+              end: match.offset?.start ? match.offset.start + match.text.length : match.text.length
+            });
+          }
+        });
+      });
+      
+    } catch (error) {
+      console.warn('⚠️ Compromise temporal extraction failed:', error.message);
+    }
+    
+    return entities;
   }
 
   mapEntityType(nerType) {
@@ -307,8 +422,28 @@ class DistilBertIntentParser {
     const startTime = Date.now();
     
     try {
+      // 0. Build context-aware message if conversation history is provided
+      let messageToClassify = message;
+      const conversationHistory = options.conversationHistory || [];
+      
+      if (conversationHistory.length > 0) {
+        // For very short messages like "yes", "no", "ok", include last assistant message for context
+        const isShortResponse = message.trim().length < 15 && 
+                               /^(yes|no|ok|sure|yeah|nope|yep|nah|maybe|perhaps|definitely|absolutely|correct|right|wrong|true|false)$/i.test(message.trim());
+        
+        if (isShortResponse) {
+          // Get the last assistant message
+          const lastAssistantMsg = conversationHistory.slice().reverse().find(msg => msg.role === 'assistant');
+          if (lastAssistantMsg) {
+            // Prepend context to help classification
+            messageToClassify = `[Context: ${lastAssistantMsg.content.substring(0, 100)}] ${message}`;
+            console.log(`🔍 [DISTILBERT] Short response detected, adding context: "${message}" → "${messageToClassify}"`);
+          }
+        }
+      }
+      
       // 1. Generate embedding for input message
-      const messageEmbedding = await this.generateEmbedding(message);
+      const messageEmbedding = await this.generateEmbedding(messageToClassify);
       
       // 2. Calculate similarity scores with seed examples
       const scores = this.calculateIntentScores(messageEmbedding);
@@ -375,8 +510,8 @@ class DistilBertIntentParser {
     const hasQuestionMark = message.trim().endsWith('?');
     const isQuestion = hasQuestionWord || hasQuestionMark;
     
-    // Detect explicit storage verbs
-    const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|keep in mind|write down|jot down)\b/);
+    // Detect explicit storage verbs and reminder requests
+    const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|keep in mind|write down|jot down|set a reminder|remind me|create a reminder|add a reminder)\b/);
     
     // Boost memory_store ONLY if has storage verbs AND not a question
     if (entities.some(e => e.type === 'datetime' || e.type === 'person')) {

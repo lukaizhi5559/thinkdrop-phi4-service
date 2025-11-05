@@ -11,15 +11,21 @@ router.post('/intent.parse', validateIntentParseRequest, async (req, res, next) 
   try {
     const { message, context, options } = req.body.payload;
     
-    console.log('Intent parse request:', { message, options });
+    console.log('Intent parse request:', { message, hasContext: !!context, hasConversationHistory: !!(context?.conversationHistory), options });
     
     // Validate message exists
     if (!message) {
       throw new Error('message is required in payload');
     }
     
+    // Merge context into options for the parser
+    const parsingOptions = {
+      ...(options || {}),
+      conversationHistory: context?.conversationHistory || []
+    };
+    
     // Parse intent
-    const result = await intentParsingService.parseIntent(message, options || {});
+    const result = await intentParsingService.parseIntent(message, parsingOptions);
     
     res.json({
       version: 'mcp.v1',
