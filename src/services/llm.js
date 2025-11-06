@@ -11,6 +11,15 @@ class LLMService {
     this.apiUrl = process.env.PHI4_API_URL || 'http://127.0.0.1:11434/api/generate';
     this.model = process.env.PHI4_MODEL || 'phi4';
     this.enabled = process.env.ENABLE_PHI4 === 'true';
+    
+    // Performance settings from environment with optimized defaults
+    this.defaultMaxTokens = parseInt(process.env.PHI4_MAX_TOKENS) || 250;
+    this.defaultContextLength = parseInt(process.env.PHI4_CONTEXT_LENGTH) || 4096;
+    this.defaultNumThread = parseInt(process.env.PHI4_NUM_THREAD) || 8;
+    this.defaultNumGpu = parseInt(process.env.PHI4_NUM_GPU) || 1;
+    this.defaultRepeatPenalty = parseFloat(process.env.PHI4_REPEAT_PENALTY) || 1.1;
+    this.defaultTemperature = parseFloat(process.env.PHI4_TEMPERATURE) || 0.7;
+    this.defaultTopP = parseFloat(process.env.PHI4_TOP_P) || 0.9;
   }
 
   async initialize() {
@@ -84,17 +93,18 @@ class LLMService {
       
       const modelToUse = options.model || this.model;
       console.log(`🤖 [LLM] Using model: ${modelToUse}`);
+      console.log(`⚡ [LLM] Performance settings: maxTokens=${this.defaultMaxTokens}, contextLength=${this.defaultContextLength}, numThread=${this.defaultNumThread}`);
       
       const response = await axios.post(this.apiUrl, {
         model: modelToUse,
         prompt: prompt,
         stream: false,
         options: {
-          temperature: options.temperature || 0.7,  // Natural, varied responses
-          num_predict: options.maxTokens || 500,    // Enough for complete thoughts
+          temperature: options.temperature || this.defaultTemperature,
+          num_predict: options.maxTokens || this.defaultMaxTokens,
           top_k: options.topK || 40,
-          top_p: options.topP || 0.9,
-          num_ctx: options.contextLength || 8192,   // Larger context window for conversation history
+          top_p: options.topP || this.defaultTopP,
+          num_ctx: options.contextLength || this.defaultContextLength,
           stop: [
             '\n\nUser:',
             '\nUser:',
@@ -194,13 +204,12 @@ CRITICAL RULES:
     const isFactualQuery = hasWebResults || isUserPreferenceQuery;
     
     // 1. Add web search results if available (highest priority for factual questions)
+    // ULTRA-OPTIMIZED: Only use top 1 result, 120 chars for fastest processing
     if (webSearchResults && webSearchResults.length > 0) {
-      prompt += 'WEB SEARCH RESULTS (Current information from the internet):\n';
-      webSearchResults.forEach((result, idx) => {
-        prompt += `${idx + 1}. ${result.text}\n`;
-      });
-      prompt += '\nUse these web search results to answer the user\'s question with accurate, up-to-date information.\n\n';
-      console.log(`🌐 [GENERAL-ANSWER] Using ${webSearchResults.length} web search results`);
+      prompt += 'INFO: ';
+      const truncated = webSearchResults[0].text.substring(0, 120);
+      prompt += `${truncated}...\n\n`;
+      console.log(`🌐 [GENERAL-ANSWER] Using 1 web result (120 chars)`);
     }
     
     // 2. Add system messages from conversation history
@@ -259,7 +268,7 @@ CRITICAL RULES:
     if (conversationHistory && conversationHistory.length > 0) {
       const dialogue = conversationHistory.filter(m => m.role !== 'system');
       
-      // Always get last 6 messages (immediate context)
+      // Keep last 6 messages (3 turns) for context awareness
       const recentMessages = dialogue.slice(-6);
       
       // Get older messages (if any) for relevance filtering
@@ -347,11 +356,11 @@ CRITICAL RULES:
         prompt: prompt,
         stream: true, // ⚡ Enable streaming
         options: {
-          temperature: options.temperature || 0.7,
-          num_predict: options.maxTokens || 500,
+          temperature: options.temperature || this.defaultTemperature,
+          num_predict: options.maxTokens || this.defaultMaxTokens,
           top_k: options.topK || 40,
-          top_p: options.topP || 0.9,
-          num_ctx: options.contextLength || 8192,
+          top_p: options.topP || this.defaultTopP,
+          num_ctx: options.contextLength || this.defaultContextLength,
           stop: [
             '\n\nUser:',
             '\nUser:',
