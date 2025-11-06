@@ -73,7 +73,17 @@ class DistilBertIntentParser {
         "When is the AWS cert due?",
         "What's my shoe size?",
         "What am I allergic to?",
-        "What's my car's VIN?"
+        "What's my car's VIN?",
+        "when do I have an appointment",
+        "when I do I have an appt",
+        "when do I have my appt",
+        "when is my appointment",
+        "do I have any appointments",
+        "what appointments do I have",
+        "when is my next appointment",
+        "when's my doctor appointment",
+        "any upcoming appointments",
+        "anything upcoming"
       ],
       web_search: [
         // Current leadership and positions
