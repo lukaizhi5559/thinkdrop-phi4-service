@@ -372,7 +372,24 @@ class DistilBertIntentParser {
         "Alright what's Docker",
         "What's that mean",
         "What does that stand for",
-        "Cool what's the meaning of life"
+        "Cool what's the meaning of life",
+        
+        // ── Follow-up questions (asking for more details) ───────
+        "Give me examples",
+        "Can you give me examples?",
+        "Show me some examples",
+        "Tell me more",
+        "Explain further",
+        "Can you elaborate?",
+        "Provide more details",
+        "Go into more detail",
+        "What else?",
+        "Anything else?",
+        "Continue",
+        "Keep going",
+        "More info please",
+        "Can you expand on that?",
+        "Give me more information"
       ],
 
       greeting: [
