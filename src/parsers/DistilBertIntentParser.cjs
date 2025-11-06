@@ -344,12 +344,35 @@ class DistilBertIntentParser {
         "Do you support voice input right now?",
         "How accurate is your NER for non-English names?",
         "Can you call external APIs directly?",
-        "What’s the maximum context window you keep?",
+        "What's the maximum context window you keep?",
         "Are you able to edit photos?",
         "Can you translate speech in real time?",
         "How do you handle ambiguous dates like 'next Friday'?",
         "Do you retain info across browser tabs?",
-        "Can you export my memory as JSON?"
+        "Can you export my memory as JSON?",
+        
+        // ── "What is X" questions (definitions/explanations) ───────
+        "What's an API?",
+        "What is MCP?",
+        "What's a webhook?",
+        "What is REST?",
+        "What's GraphQL?",
+        "What is Docker?",
+        "What's Kubernetes?",
+        "What is CI/CD?",
+        "What's a JWT?",
+        "What is OAuth?",
+        "What's an ORM?",
+        "What is TypeScript?",
+        "What's a microservice?",
+        "What is serverless?",
+        "What's edge computing?",
+        "Ok what's an API",
+        "So what is REST",
+        "Alright what's Docker",
+        "What's that mean",
+        "What does that stand for",
+        "Cool what's the meaning of life"
       ],
 
       greeting: [
