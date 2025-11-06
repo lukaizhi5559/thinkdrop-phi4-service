@@ -31,6 +31,7 @@ class DistilBertIntentParser {
     // Aim: 15-25 diverse examples per intent for robust classification
     this.seedExamples = {
       memory_store: [
+        // ── Original (kept) ─────────────────────────────────────
         "Remember I have a meeting with John tomorrow at 3pm",
         "Save this: I need to buy milk and eggs",
         "Don't forget my dentist appointment on Friday",
@@ -53,9 +54,53 @@ class DistilBertIntentParser {
         "Remind me about the meeting tomorrow at 10am",
         "I have an appointment next week on Tuesday. Set a reminder",
         "Create a reminder for my doctor's appointment on Monday",
-        "I need a reminder for the team standup at 9am tomorrow"
+        "I need a reminder for the team standup at 9am tomorrow",
+        "I need to buy milk and eggs",
+        "Don't forget my dentist appointment on Friday",
+        "Keep in mind that Sarah's birthday is next week",
+        "Note that the project deadline is October 15th",
+        "Remember: reschedule eye exam to Nov 12 at 2:30pm",
+        "Save this note—server beta key is F9A3-22Q",
+        "Keep track that my passport expires in March",
+        "Note Chloe's ukulele recital is Saturday 6pm",
+        "Store my Wi-Fi: SSID 'Home5G', pass 'orchid77'",
+        "Log that I ran 3 miles today",
+        "Don't forget mom's flight lands 7:45am Friday",
+        "Add: renew AWS cert before 10/31",
+        "Please remember I prefer dark mode",
+        "Save my shoe size: US 10.5",
+        "Keep in mind I'm allergic to peanuts",
+        "Note down my car's VIN number",
+        "Remember my favorite coffee is oat milk latte",
+        "Set a reminder for my dentist appointment next Friday at 3pm",
+        "Remind me about the meeting tomorrow at 10am",
+        "I have an appointment next week on Tuesday. Set a reminder",
+
+        // ── New – richer phrasing, multi-entity, typos ───────
+        "Quick reminder: call Dr. Patel on Tuesday 9am about bloodwork",
+        "Store this: license plate 7XYZ123, expires 2026-08-31",
+        "Jot down that I owe Mike $42 for the concert tickets",
+        "Never forget: anniversary dinner reservation at Le Petit Bistro, 7:30pm Sat",
+        "Add to notes – my blood type is O-negative",
+        "Remember I’m on a gluten-free diet starting Monday",
+        "Save my gym locker combo: 14-28-03",
+        "Note that the new office Wi-Fi is 'CorpGuest' / pw 'Welcome2025!'",
+        "Log workout: 45 min spin class, 320 cal burned",
+        "Put this in memory: cousin Lisa’s baby shower is 11/22 at 2pm",
+        "Keep the API token safe: sk_live_51J…",
+        "Save the flight confirmation: AA 1847, departs 06:15 on 12/03",
+        "Remember I take 20mg of Lipitor every night",
+        "Add parking spot B-17 to my car notes",
+        "Store my Spotify playlist URL: https://open.spotify.com/playlist/…",
+        "Note that I’m out of office 12/24-12/26",
+        "Remember my preferred seat is 12A on Delta",
+        "Save the vet appointment for Max on 11/18 at 3:45pm",
+        "Keep in mind the sprint review is every other Thursday 10am",
+        "Log that I finished reading 'Atomic Habits' today"
       ],
+
       memory_retrieve: [
+        // ── Original ─────────────────────────────────────
         "What meetings do I have tomorrow?",
         "When is my dentist appointment?",
         "What did I need to buy at the store?",
@@ -83,10 +128,31 @@ class DistilBertIntentParser {
         "when is my next appointment",
         "when's my doctor appointment",
         "any upcoming appointments",
-        "anything upcoming"
+        "anything upcoming",
+        // ── New – fuzzy, compound, time-relative ───────
+        "Any appointments this week?",
+        "Remind me what I owe Mike",
+        "What’s my locker combo again?",
+        "Show me the API token I saved",
+        "When’s the baby shower?",
+        "List everything I logged about workouts",
+        "What dietary restrictions did I mention?",
+        "Pull up the flight details for AA 1847",
+        "What medicines am I on?",
+        "Where did I park the car?",
+        "Show me the Spotify link I stored",
+        "When am I out of office?",
+        "Which seat do I like on Delta?",
+        "Vet appointment for Max?",
+        "When’s the next sprint review?",
+        "Did I finish any books recently?",
+        "Anything due before end of month?",
+        "What’s the gluten-free start date?",
+        "Show all passwords I’ve saved"
       ],
+
       web_search: [
-        // Current leadership and positions
+        // ── Original (kept) ─────────────────────────────────────
         "Who is the president of the United States?",
         "Who is the current president of USA?",
         "Who's the prime minister of UK right now?",
@@ -132,8 +198,40 @@ class DistilBertIntentParser {
         "Give me a script to scrape websites with Python",
         "Show me how to use React hooks",
         "How do I deploy a Docker container?",
-        "Give me code for file upload in Express"
+        "Give me code for file upload in Express",
+
+        // ── New – more niches, real-time, code, events ───────
+        "Current ETH gas price?",
+        "What’s the 10-year Treasury yield right now?",
+        "Latest iPhone 16 Pro price in USD",
+        "Who won the Nobel Prize in Physics this year?",
+        "Current population of Tokyo",
+        "When is the next SpaceX Starship launch?",
+        "What’s the current version of Kubernetes?",
+        "Show me the latest Tailwind CSS docs",
+        "How do I set up OAuth2 with Google in FastAPI?",
+        "Give me a bash one-liner to watch disk usage",
+        "What’s the weather forecast for Seattle this weekend?",
+        "Current price of gold per ounce",
+        "Who is the CEO of xAI?",
+        "Latest commit on the Linux kernel",
+        "When does the F1 Monaco GP start?",
+        "Give me a Rust example of async HTTP client",
+        "How do I configure nginx as a reverse proxy for Next.js?",
+        "Show me a Terraform module for an S3 bucket with versioning",
+        "Current COVID booster eligibility in California",
+        "What’s the latest stable version of PostgreSQL?",
+        "Give me a regex to validate UUID v4",
+        "Who is the current UN Secretary-General?",
+        "Latest inflation rate for the Eurozone",
+        "When is the next total lunar eclipse visible in North America?",
+        "Show me a minimal Vite + React + TypeScript starter",
+        "Current market cap of NVIDIA",
+        "How do I enable 2FA on GitHub with an authenticator app?",
+        "Give me a Python snippet to resize images with Pillow",
+        "What’s the current base rate of the ECB?"
       ],
+
       general_knowledge: [
         // Stable facts that don't change
         "What is the capital of France?",
@@ -153,9 +251,33 @@ class DistilBertIntentParser {
         "What is the speed of light?",
         "How many continents are there?",
         "What is photosynthesis?",
-        "Who wrote Romeo and Juliet?"
+        "Who wrote Romeo and Juliet?",
+
+        // ── New – deeper CS, science, history, misc ───────
+        "What is the halting problem?",
+        "Explain the difference between a process and a thread",
+        "What does ACID stand for in databases?",
+        "How does a Bloom filter work?",
+        "What is the difference between HTTP/1.1 and HTTP/2?",
+        "Explain the Observer pattern with a diagram",
+        "What is the chemical formula for glucose?",
+        "Who proposed the theory of relativity?",
+        "What is the Pythagorean theorem?",
+        "How does RSA encryption work at a high level?",
+        "What is the difference between a stack and a queue?",
+        "Explain how DNS resolution works step-by-step",
+        "What is the Bohr model of the atom?",
+        "Who painted the Mona Lisa?",
+        "What is the difference between RAM and ROM?",
+        "Explain the concept of virtual memory",
+        "What is the capital of Australia?",
+        "How does a binary search tree maintain balance?",
+        "What is the significance of the Turing Award?",
+        "Explain the difference between supervised and unsupervised learning"
       ],
+
       command: [
+        // ── Original ─────────────────────────────────────
         "Take a screenshot",
         "Open Chrome",
         "Close all windows",
@@ -170,10 +292,33 @@ class DistilBertIntentParser {
         "Close all Chrome tabs",
         "Launch Docker Desktop",
         "Copy the last transcript to clipboard",
-        "Set an alarm for 7am"
+        "Set an alarm for 7am",
+
+        // ── New – more apps, OS, automation ───────
+        "Open Slack and go to #general",
+        "Lock the screen now",
+        "Open Spotify and play my Discover Weekly",
+        "Turn on Do Not Disturb until 5pm",
+        "Open Terminal and run `htop`",
+        "Empty the Recycle Bin",
+        "Open Notion page 'Project Roadmap'",
+        "Start screen recording",
+        "Pause all media playback",
+        "Open the calculator app",
+        "Switch to the next desktop space",
+        "Open my email client and compose a new message to boss@example.com",
+        "Enable Bluetooth",
+        "Open the system settings → Displays",
+        "Restart the computer in 2 minutes",
+        "Open Finder and go to Downloads",
+        "Take a full-page screenshot and save as PDF",
+        "Open Postman and load the 'API Tests' collection",
+        "Turn off Wi-Fi",
+        "Open the Calendar app and create an event for tomorrow 10am titled 'Standup'"
       ],
+
       question: [
-        // Capability queries and general questions
+        // ── Original ─────────────────────────────────────
         "How are you doing?",
         "Can you help me with something?",
         "What can you do?",
@@ -187,9 +332,28 @@ class DistilBertIntentParser {
         "Are you able to control apps?",
         "How do I use this feature?",
         "What are your capabilities?",
-        "Can you explain how this works?"
+        "Can you explain how this works?",
+
+        // ── New – meta, troubleshooting, limits ───────
+        "What model are you running under the hood?",
+        "Do you have access to my camera?",
+        "Can you read files from my Desktop folder?",
+        "Are you GDPR compliant?",
+        "What happens to the data I store in memory?",
+        "Can you generate images?",
+        "Do you support voice input right now?",
+        "How accurate is your NER for non-English names?",
+        "Can you call external APIs directly?",
+        "What’s the maximum context window you keep?",
+        "Are you able to edit photos?",
+        "Can you translate speech in real time?",
+        "How do you handle ambiguous dates like 'next Friday'?",
+        "Do you retain info across browser tabs?",
+        "Can you export my memory as JSON?"
       ],
+
       greeting: [
+        // ── Original ─────────────────────────────────────
         "Hello",
         "Hi there",
         "Good morning",
@@ -201,9 +365,29 @@ class DistilBertIntentParser {
         "Yo!",
         "Thanks a lot!",
         "Appreciate it",
-        "Sup"
+        "Sup",
+
+        // ── New – casual, regional, emoji-rich ───────
+        "Heya!",
+        "Morning! ☕",
+        "What’s up doc?",
+        "Hi friend 😊",
+        "G’day mate",
+        "Howdy partner",
+        "Salut!",
+        "Namaste 🙏",
+        "Hey hey hey!",
+        "Cheers!",
+        "Thanks heaps!",
+        "You rock! 🚀",
+        "Hey, long time no see",
+        "What’s cooking?",
+        "Yo yo yo",
+        "Hey there, genius"
       ],
+
       context: [
+        // ── Original ─────────────────────────────────────
         "What did we talk about earlier?",
         "What was I saying before?",
         "Can you remind me of our conversation?",
@@ -214,7 +398,26 @@ class DistilBertIntentParser {
         "Remind me what I asked 10 minutes ago",
         "Continue from where we left off",
         "What's the plan we outlined earlier?",
-        "Show me the earlier steps"
+        "Show me the earlier steps",
+
+        // ── New – fuzzy time, multi-turn, session ───────
+        "Pick up where we stopped yesterday",
+        "What was the last code snippet you gave me?",
+        "Remind me of the grocery list from this morning",
+        "What were the three options we weighed?",
+        "Show the decision matrix we built",
+        "What was the URL you shared 5 mins ago?",
+        "Recap the pros/cons we listed",
+        "What was the final command I ran?",
+        "Bring me back to the API design discussion",
+        "What did I decide about the color scheme?",
+        "Show the timer I started earlier",
+        "What was the exact error message?",
+        "Continue the story we were writing",
+        "What were the meeting action items?",
+        "Remind me of the password we generated",
+        "What was the last search query?",
+        "Show the table we sketched"
       ]
     };
     
@@ -275,67 +478,170 @@ class DistilBertIntentParser {
     try {
       const entities = [];
       const doc = nlp(message);
-      
-      // Extract named entities using Compromise (much faster than BERT NER)
-      // People
-      const people = doc.people().json();
-      people.forEach(person => {
-        entities.push({
-          type: 'person',
-          value: person.text,
-          entity_type: 'PERSON',
-          confidence: 0.9,
-          start: person.offset?.start || 0,
-          end: person.offset?.start ? person.offset.start + person.text.length : person.text.length
+
+      // ------------------------------------------------------------
+      // 1. Compromise built-ins (people / places / orgs)
+      // ------------------------------------------------------------
+      const addCompromise = (method, type, confidence = 0.92) => {
+        doc[method]().json().forEach(item => {
+          const txt = item.text.trim();
+          if (!txt) return;
+          entities.push({
+            type,
+            value: txt,
+            entity_type: type.toUpperCase(),
+            confidence,
+            start: item.offset?.start ?? message.indexOf(txt),
+            end:   (item.offset?.start ?? message.indexOf(txt)) + txt.length
+          });
         });
-      });
-      
-      // Places
-      const places = doc.places().json();
-      places.forEach(place => {
-        entities.push({
-          type: 'location',
-          value: place.text,
-          entity_type: 'LOCATION',
-          confidence: 0.9,
-          start: place.offset?.start || 0,
-          end: place.offset?.start ? place.offset.start + place.text.length : place.text.length
-        });
-      });
-      
-      // Organizations
-      const orgs = doc.organizations().json();
-      orgs.forEach(org => {
-        entities.push({
-          type: 'organization',
-          value: org.text,
-          entity_type: 'ORGANIZATION',
-          confidence: 0.9,
-          start: org.offset?.start || 0,
-          end: org.offset?.start ? org.offset.start + org.text.length : org.text.length
-        });
-      });
-      
-      // Extract appointment types and medical specialties
-      const appointmentTypes = doc.match('(dentist|doctor|vision|eye|dental|medical|therapy|physical|checkup|exam|appointment) (appt|appointment|visit|exam|checkup)?').json();
-      appointmentTypes.forEach(appt => {
+      };
+
+      addCompromise('people', 'person');
+      addCompromise('places', 'location');
+      addCompromise('organizations', 'organization');
+
+      // ------------------------------------------------------------
+      // 2. Appointment / medical keywords (regex – more flexible)
+      // ------------------------------------------------------------
+      const apptRegex = /(?:dentist|doctor|dr\.?|vision|eye|dental|medical|therapy|physical|check[- ]?up|exam|appt|appointment|visit|consultation|follow.?up)\b\s*(?:appt|appointment|visit|exam|check.?up)?/gi;
+      let m;
+      while ((m = apptRegex.exec(message)) !== null) {
+        const val = m[0];
         entities.push({
           type: 'appointment_type',
-          value: appt.text,
+          value: val,
           entity_type: 'APPOINTMENT',
-          confidence: 0.9,
-          start: appt.offset?.start || 0,
-          end: appt.offset?.start ? appt.offset.start + appt.text.length : appt.text.length
+          confidence: 0.93,
+          start: m.index,
+          end: m.index + val.length
         });
+      }
+
+      // ------------------------------------------------------------
+      // 3. Temporal entities (your existing method)
+      // ------------------------------------------------------------
+      entities.push(...this.extractTemporalEntities(message));
+
+      // ------------------------------------------------------------
+      // 4. Regex-based universal entities
+      // ------------------------------------------------------------
+      const regexes = [
+        { re: /https?:\/\/[^\s]+/gi,               type: 'url',          et: 'URL',        conf: 1.0 },
+        { re: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi, type: 'email', et: 'EMAIL',      conf: 1.0 },
+        { re: /(?:\+?\d{1,3}[-.\s]?)?(?:\(\d{1,4}\)|\d{1,4})[-.\s]?\d{1,4}[-.\s]?\d{1,4}\b/gi, type: 'phone', et: 'PHONE', conf: 0.98 },
+        { re: /\b\$?\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b/g, type: 'money',   et: 'MONEY',      conf: 0.96 },
+        { re: /\bv?\d+\.\d+(?:\.\d+)?\b/g,          type: 'version',      et: 'VERSION',    conf: 0.95 },
+        { re: /\b\d+\s*(?:minutes?|hours?|days?|weeks?|miles?|km|lbs?|kg)\b/gi, type: 'quantity', et: 'QUANTITY', conf: 0.90 }
+      ];
+
+      regexes.forEach(({ re, type, et, conf }) => {
+        let match;
+        while ((match = re.exec(message)) !== null) {
+          entities.push({
+            type,
+            value: match[0],
+            entity_type: et,
+            confidence: conf,
+            start: match.index,
+            end: match.index + match[0].length
+          });
+        }
       });
-      
-      // Add temporal entities (dates and times)
-      const temporalEntities = this.extractTemporalEntities(message);
-      entities.push(...temporalEntities);
-      
+
+      // ------------------------------------------------------------
+      // 5. Multi-word tech terms (case-insensitive)
+      // ------------------------------------------------------------
+      const techPhrases = [
+        'next.js','react native','vue.js','tailwind css','chakra ui','material ui',
+        'bootstrap','fast api','django rest','spring boot','ruby on rails',
+        'docker','kubernetes','terraform','ansible','github actions','gitlab ci',
+        'postman','insomnia','figma','notion','linear','jira','javascript','typescript',
+        'python','rust','golang','java','swift','kotlin','c\\+\\+','c#',
+        // Single-letter languages (need word boundaries to avoid false positives)
+        '\\bc\\b','\\br\\b'
+      ];
+      const techRE = new RegExp(`\\b(${techPhrases.join('|')})\\b`, 'gi');
+      while ((m = techRE.exec(message)) !== null) {
+        entities.push({
+          type: 'tech_term',
+          value: m[0],
+          entity_type: 'TECH',
+          confidence: 0.96,
+          start: m.index,
+          end: m.index + m[0].length
+        });
+      }
+
+      // ------------------------------------------------------------
+      // 6. Proper-noun fallback (Compromise missed)
+      // ------------------------------------------------------------
+      const seen = new Set(entities.map(e => e.value.toLowerCase()));
+      doc.terms().json().forEach(tok => {
+        const term = tok.terms?.[0];
+        if (!term) return;
+        const txt = term.text;
+        const low = txt.toLowerCase();
+        if (seen.has(low)) return;
+
+        const isProper   = term.tags?.includes('ProperNoun');
+        const isCap      = /^[A-Z]/.test(txt) && txt.length >= 1; // Single capital letter or capitalized word
+        const isAcronym  = /^[A-Z]{2,}$/.test(txt);
+
+        if (isProper || isCap || isAcronym) {
+          const start = term.offset?.start ?? message.indexOf(txt);
+          entities.push({
+            type: 'proper_noun',
+            value: txt,
+            entity_type: 'PROPER_NOUN',
+            confidence: isProper ? 0.88 : (isAcronym ? 0.85 : 0.78),
+            start,
+            end: start + txt.length
+          });
+          seen.add(low);
+        }
+      });
+
+      // ------------------------------------------------------------
+      // 7. Merge adjacent same-type entities (e.g. "John Doe")
+      // ------------------------------------------------------------
+      if (entities.length > 1) {
+        const merged = [];
+        let cur = entities[0];
+
+        for (let i = 1; i < entities.length; i++) {
+          const nxt = entities[i];
+          const gap = nxt.start - cur.end;
+
+          if (
+            cur.entity_type === nxt.entity_type &&
+            gap >= 0 && gap <= 2 &&                     // space or punctuation
+            !/[.!?]\s*$/.test(message.slice(cur.end, nxt.start))
+          ) {
+            // extend current
+            cur = {
+              ...cur,
+              value: message.slice(cur.start, nxt.end),
+              end: nxt.end,
+              confidence: Math.max(cur.confidence, nxt.confidence)
+            };
+          } else {
+            merged.push(cur);
+            cur = nxt;
+          }
+        }
+        merged.push(cur);
+        entities.splice(0, entities.length, ...merged);
+      }
+
+      // ------------------------------------------------------------
+      // 8. Final sort by start position
+      // ------------------------------------------------------------
+      entities.sort((a, b) => a.start - b.start);
+
       return entities;
-    } catch (error) {
-      console.warn('Entity extraction failed:', error.message);
+    } catch (err) {
+      console.warn('Entity extraction failed:', err.message);
       return [];
     }
   }

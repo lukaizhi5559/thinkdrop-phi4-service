@@ -1,13 +1,13 @@
 /**
  * Entity Extraction Service
- * Handles NER-based entity extraction
+ * Uses DistilBERT parser's entity extraction for consistency
  */
 
-const { pipeline } = require('@xenova/transformers');
+const IntentParserFactory = require('../parsers/IntentParserFactory.cjs');
 
 class EntityExtractionService {
   constructor() {
-    this.nerClassifier = null;
+    this.parser = null;
     this.initialized = false;
   }
 
@@ -16,10 +16,8 @@ class EntityExtractionService {
     
     console.log('🚀 Initializing Entity Extraction Service...');
     
-    const nerModel = process.env.NER_MODEL || 'Xenova/bert-base-multilingual-cased-ner-hrl';
-    this.nerClassifier = await pipeline('token-classification', nerModel, {
-      grouped_entities: true
-    });
+    // Use the same parser as intent classification for consistency
+    this.parser = await IntentParserFactory.getParser('distilbert');
     
     this.initialized = true;
     console.log('✅ Entity Extraction Service initialized');
@@ -31,16 +29,8 @@ class EntityExtractionService {
     }
 
     try {
-      const nerResults = await this.nerClassifier(text);
-      
-      const entities = nerResults.map(entity => ({
-        type: this.mapEntityType(entity.entity_group),
-        value: entity.word,
-        entity_type: entity.entity_group,
-        confidence: entity.score,
-        start: entity.start,
-        end: entity.end
-      }));
+      // Use the parser's extractEntities method (Compromise-based)
+      const entities = await this.parser.extractEntities(text);
       
       // Filter by entity types if specified
       if (options.entityTypes && options.entityTypes.length > 0) {
@@ -52,26 +42,6 @@ class EntityExtractionService {
       console.error('Entity extraction failed:', error);
       throw new Error(`Entity extraction failed: ${error.message}`);
     }
-  }
-
-  mapEntityType(nerType) {
-    // Handle undefined or null nerType
-    if (!nerType) {
-      return 'other';
-    }
-    
-    const mapping = {
-      'PER': 'person',
-      'PERSON': 'person',
-      'LOC': 'location',
-      'GPE': 'location',
-      'ORG': 'organization',
-      'DATE': 'datetime',
-      'TIME': 'datetime',
-      'MISC': 'other'
-    };
-    
-    return mapping[nerType] || nerType.toLowerCase();
   }
 }
 
