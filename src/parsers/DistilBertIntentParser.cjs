@@ -148,7 +148,17 @@ class DistilBertIntentParser {
         "Did I finish any books recently?",
         "Anything due before end of month?",
         "What’s the gluten-free start date?",
-        "Show all passwords I’ve saved"
+        "Show all passwords I've saved",
+        // ── Explicit memory/notes queries ──────────────
+        "Check my memory",
+        "Show my memory",
+        "What's in my memory",
+        "Show my notes",
+        "Show my saved notes",
+        "What do you remember about me",
+        "What have I told you",
+        "Search my memories",
+        "Find in my notes"
       ],
 
       web_search: [
@@ -314,7 +324,21 @@ class DistilBertIntentParser {
         "Take a full-page screenshot and save as PDF",
         "Open Postman and load the 'API Tests' collection",
         "Turn off Wi-Fi",
-        "Open the Calendar app and create an event for tomorrow 10am titled 'Standup'"
+        "Open the Calendar app and create an event for tomorrow 10am titled 'Standup'",
+        // ── System monitoring commands ──────────────────
+        "Check system memory usage",
+        "Show RAM usage",
+        "How much memory do I have",
+        "How much memory I have on my computer",
+        "How much RAM do I have",
+        "What's my memory usage",
+        "Check disk space",
+        "Show CPU usage",
+        "Monitor network activity",
+        "Check battery status",
+        "Show running processes",
+        "How much disk space do I have",
+        "What's my CPU usage"
       ],
 
       question: [
