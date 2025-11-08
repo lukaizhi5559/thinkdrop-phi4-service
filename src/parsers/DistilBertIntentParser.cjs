@@ -686,6 +686,21 @@ class DistilBertIntentParser {
         "Describe the screen content",
         "What's in my screen",
         
+        // ── Follow-up vision queries ──────────────────────────
+        "What about now",
+        "How about now",
+        "And now",
+        "What do you see now",
+        "What's on my screen now",
+        "Look at my screen now",
+        "Describe what you see now",
+        "What's showing now",
+        "What changed",
+        "What's different now",
+        "Check my screen again",
+        "Look again",
+        "What do you see this time",
+        
         // ── OCR and text extraction ───────────────────────────
         "Read my screen",
         "Extract text from my screen",
