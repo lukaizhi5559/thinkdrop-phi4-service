@@ -30,10 +30,15 @@ const knowledgeRoutes = require('./routes/knowledge.cjs');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
+const modelSelector = require('./utils/model-selector');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// Smart model selection on startup
+const modelSelection = modelSelector.selectBestModel(process.env.OLLAMA_MODEL);
+process.env.OLLAMA_MODEL = modelSelection.model; // Override with selected model
 
 // Security middleware
 app.use(helmet());
@@ -102,6 +107,7 @@ async function startServer() {
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Port: ${PORT}`);
     console.log(`   Host: ${HOST}`);
+    console.log(`   🤖 Model: ${modelSelection.model} (${modelSelection.reason})`);
     
     // Warm up parsers if enabled
     if (process.env.MODEL_WARMUP_ON_START === 'true') {
