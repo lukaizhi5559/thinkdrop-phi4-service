@@ -15,17 +15,16 @@ class DistilBertIntentParser {
     this.embedder = null;
     this.initialized = false;
     
-    // Intent labels (expanded with general_knowledge and vision)
+    // Intent labels
     this.intentLabels = [
+      'screen_intelligence', // Primary screen analysis (UI elements, browser content, desktop items)
+      'command',
       'memory_store',
       'memory_retrieve',
       'web_search',         // Time-sensitive queries requiring current data
       'general_knowledge',  // Stable facts that don't need web search
-      'command',
-      'vision',             // Screen capture, OCR, and visual analysis
       'question',           // Capability queries and general questions
-      'greeting',
-      'context'
+      'greeting'
     ];
     
     // Seed examples for each intent (expanded with paraphrases, edge cases, hard negatives)
@@ -159,7 +158,37 @@ class DistilBertIntentParser {
         "What do you remember about me",
         "What have I told you",
         "Search my memories",
-        "Find in my notes"
+        "Find in my notes",
+        
+        // ── Conversation context retrieval ──────────────
+        "What did we talk about earlier?",
+        "What was I saying before?",
+        "Can you remind me of our conversation?",
+        "What were we discussing?",
+        "Go back to what we were talking about",
+        "What were we discussing before this?",
+        "Summarize our last session",
+        "Remind me what I asked 10 minutes ago",
+        "Continue from where we left off",
+        "What's the plan we outlined earlier?",
+        "Show me the earlier steps",
+        "Pick up where we stopped yesterday",
+        "What was the last code snippet you gave me?",
+        "Remind me of the grocery list from this morning",
+        "What were the three options we weighed?",
+        "Show the decision matrix we built",
+        "What was the URL you shared 5 mins ago?",
+        "Recap the pros/cons we listed",
+        "What was the final command I ran?",
+        "Bring me back to the API design discussion",
+        "What did I decide about the color scheme?",
+        "Show the timer I started earlier",
+        "What was the exact error message?",
+        "Continue the story we were writing",
+        "What were the meeting action items?",
+        "Remind me of the password we generated",
+        "What was the last search query?",
+        "Show the table we sketched"
       ],
 
       web_search: [
@@ -327,6 +356,35 @@ class DistilBertIntentParser {
         "Open Postman and load the 'API Tests' collection",
         "Turn off Wi-Fi",
         "Open the Calendar app and create an event for tomorrow 10am titled 'Standup'",
+        // ── File and folder manipulation ──────────────────
+        "Create a file on my desktop called hello.txt",
+        "Make a folder on my desktop named projects",
+        "Create a file called helloworld.txt on my desktop",
+        "Delete the file test.txt from my desktop",
+        "Remove the folder old_stuff from my Documents",
+        "Move file.txt to my desktop",
+        "Copy report.pdf to my Documents",
+        "Rename the file old.txt to new.txt",
+        "Create a new file on my desktop",
+        "Make a new folder in my Documents",
+        "Delete all .tmp files from my desktop",
+        "Create a file named data.json on my desktop",
+        "Touch a new file called config.yml",
+        "Make directory called backup in my home",
+        "Remove all log files from current directory",
+        "Copy all PDFs to my Documents folder",
+        "Move everything from Downloads to Archive",
+        "Compress the reports folder into a zip",
+        "Extract the archive.tar.gz file",
+        "Change permissions on script.sh to executable",
+        "Create a symbolic link to my projects folder",
+        // ── Network actions ──────────────────
+        "Ping 8.8.8.8",
+        "Check if google.com is reachable",
+        "Test connection to localhost:3000",
+        "Check if port 8080 is in use",
+        "Flush DNS cache",
+        "Trace route to google.com",
         // ── System monitoring commands ──────────────────
         "Check system memory usage",
         "Show RAM usage",
@@ -402,45 +460,13 @@ class DistilBertIntentParser {
         "How many folders are in my Documents",
         "Count the files in this directory",
         "How many files are in my home folder",
-        // ── File and folder manipulation ──────────────────
-        "Create a file on my desktop called hello.txt",
-        "Make a folder on my desktop named projects",
-        "Create a file called helloworld.txt on my desktop",
-        "Delete the file test.txt from my desktop",
-        "Remove the folder old_stuff from my Documents",
-        "Move file.txt to my desktop",
-        "Copy report.pdf to my Documents",
-        "Rename the file old.txt to new.txt",
-        "Create a new file on my desktop",
-        "Make a new folder in my Documents",
-        "Delete all .tmp files from my desktop",
-        "Create a file named data.json on my desktop",
-        "Touch a new file called config.yml",
-        "Make directory called backup in my home",
-        "Remove all log files from current directory",
-        "Copy all PDFs to my Documents folder",
-        "Move everything from Downloads to Archive",
-        "Find all files larger than 100MB",
-        "Search for files modified today",
-        "Count how many files are in this folder",
-        "Show me the size of my Documents folder",
-        "Find all Python files in my projects",
-        "Delete empty folders in Downloads",
-        "Compress the reports folder into a zip",
-        "Extract the archive.tar.gz file",
-        "Change permissions on script.sh to executable",
-        "Create a symbolic link to my projects folder",
         
-        // ── Network and connectivity ──────────────────────────
+        // ── Network queries (read-only) ──────────────────────────
         "What's my IP address",
         "Show my local IP",
         "What's my public IP",
-        "Check if google.com is reachable",
-        "Ping 8.8.8.8",
-        "Test connection to localhost:3000",
         "Show active network connections",
         "What ports are open on my machine",
-        "Check if port 8080 is in use",
         "Show my network interfaces",
         "What's my MAC address",
         "Display routing table",
@@ -663,8 +689,113 @@ class DistilBertIntentParser {
         "Remove old kernels"
       ],
 
-      vision: [
-        // ── Screen description and analysis ───────────────────
+      screen_intelligence: [
+        // ── UI Element Interaction ────────────────────────────
+        "Click the Send button",
+        "Click Send",
+        "Press the Submit button",
+        "Click on Submit",
+        "Tap the Save button",
+        "Click Save",
+        "Press Enter",
+        "Click the link",
+        "Click on the menu",
+        "Open the menu",
+        "Close the window",
+        "Close this",
+        "Minimize the window",
+        "Maximize the window",
+        "Click the X button",
+        "Press the button",
+        "Click that button",
+        "Tap that",
+        "Select that option",
+        "Choose that",
+        
+        // ── Text Input ────────────────────────────────────────
+        "Type hello in the search box",
+        "Type hello",
+        "Enter my email",
+        "Fill in the form",
+        "Fill out this form",
+        "Type my name",
+        "Enter the password",
+        "Input the text",
+        "Write in the field",
+        "Type in the box",
+        "Enter text here",
+        "Fill this field",
+        "Type something",
+        "Input my address",
+        "Write my response",
+        
+        // ── UI Element Discovery ──────────────────────────────
+        "Find the Send button",
+        "Where is the Save button",
+        "Show me the menu",
+        "Locate the search box",
+        "Find the text field",
+        "Where is the login button",
+        "Show me all buttons",
+        "What buttons are on screen",
+        "List all buttons",
+        "Find clickable elements",
+        "Show me interactive elements",
+        "What can I click",
+        "Where can I type",
+        "Find the input field",
+        "Locate the form",
+        "Show me the fields",
+        "What fields are available",
+        "Find the checkbox",
+        "Where is the dropdown",
+        "Show me the options",
+        
+        // ── Form Filling ──────────────────────────────────────
+        "Fill out the login form",
+        "Complete this form",
+        "Fill in my details",
+        "Enter my information",
+        "Submit the form",
+        "Fill the registration form",
+        "Complete the signup",
+        "Fill in the fields",
+        "Enter my credentials",
+        "Fill out the survey",
+        
+        // ── Navigation ────────────────────────────────────────
+        "Go to the next page",
+        "Click next",
+        "Go back",
+        "Click previous",
+        "Scroll down",
+        "Scroll up",
+        "Go to the top",
+        "Go to the bottom",
+        "Navigate to settings",
+        "Open preferences",
+        
+        // ── Multi-step Actions ────────────────────────────────
+        "Click Send and then close the window",
+        "Type hello and press Enter",
+        "Fill the form and submit",
+        "Open the menu and select settings",
+        "Find the button and click it",
+        "Locate the field and type my name",
+        
+        // ── Keyboard Shortcuts ────────────────────────────────
+        "Press Command C",
+        "Press Ctrl V",
+        "Press Escape",
+        "Press Tab",
+        "Press Delete",
+        "Press Backspace",
+        "Hit Enter",
+        "Press Space",
+        "Press Arrow Down",
+        "Press Command S",
+        
+        // ── Screen description and analysis (merged from vision) ─
         "What do you see on my screen",
         "What's on my screen",
         "Describe my screen",
@@ -686,7 +817,7 @@ class DistilBertIntentParser {
         "Describe the screen content",
         "What's in my screen",
         
-        // ── Follow-up vision queries ──────────────────────────
+        // ── Follow-up screen queries ──────────────────────────────
         "What about now",
         "How about now",
         "And now",
@@ -701,7 +832,7 @@ class DistilBertIntentParser {
         "Look again",
         "What do you see this time",
         
-        // ── OCR and text extraction ───────────────────────────
+        // ── OCR and text extraction ───────────────────────────────
         "Read my screen",
         "Extract text from my screen",
         "What text is on my screen",
@@ -723,7 +854,7 @@ class DistilBertIntentParser {
         "Transcribe what's visible",
         "Extract readable text",
         
-        // ── Image and screenshot analysis ─────────────────────
+        // ── Image and screenshot analysis ─────────────────────────
         "What's in this image",
         "Describe this image",
         "Analyze this screenshot",
@@ -745,7 +876,7 @@ class DistilBertIntentParser {
         "Explain what's in the image",
         "Describe the visual content",
         
-        // ── UI and application analysis ───────────────────────
+        // ── UI and application analysis ───────────────────────────
         "What application is open",
         "What app am I using",
         "What's the current app",
@@ -767,7 +898,7 @@ class DistilBertIntentParser {
         "What elements are visible",
         "Analyze the screen layout",
         
-        // ── Code and technical content ────────────────────────
+        // ── Code and technical content ────────────────────────────
         "What code is on my screen",
         "Read the code on my screen",
         "What programming language is this",
@@ -789,7 +920,7 @@ class DistilBertIntentParser {
         "What's visible in the IDE",
         "Analyze the code on screen",
         
-        // ── Document and content reading ──────────────────────
+        // ── Document and content reading ──────────────────────────
         "What's in this document",
         "Read this document",
         "What does this document say",
@@ -811,7 +942,7 @@ class DistilBertIntentParser {
         "Summarize what you see",
         "What's the main content",
         
-        // ── Error and notification detection ──────────────────
+        // ── Error and notification detection ──────────────────────
         "Is there an error on my screen",
         "What's the error message",
         "Read the error",
@@ -833,7 +964,7 @@ class DistilBertIntentParser {
         "Read the warning",
         "What's showing in the alert",
         
-        // ── Specific region analysis ──────────────────────────
+        // ── Specific region analysis ──────────────────────────────
         "What's in the top right corner",
         "Read the bottom of my screen",
         "What's in the center",
@@ -853,7 +984,170 @@ class DistilBertIntentParser {
         "What's on the right",
         "Read the top right",
         "What's on the left",
-        "Describe the bottom area"
+        "Describe the bottom area",
+        
+        // ── Desktop and window queries ────────────────────────────
+        "How many files on my desktop",
+        "What files are on my desktop",
+        "List my desktop items",
+        "What folders do I have",
+        "What windows are open",
+        "What apps do I have open",
+        "What's in my browser",
+        "What email am I reading",
+        "Read my email",
+        "Read my browser",
+        "What webpage am I on",
+        
+        // ── Summarization and information extraction ──────────────
+        "Summarize what's on my screen",
+        "Give me a summary of my screen",
+        "What's the main information on screen",
+        "Summarize the content I'm viewing",
+        "What are the key points on my screen",
+        "Give me an overview of what's displayed",
+        "Summarize this page",
+        "What's the gist of what I'm looking at",
+        "Break down what's on my screen",
+        "What are the important details on screen",
+        "Summarize the information shown",
+        "Give me the highlights of my screen",
+        "What's the summary of this content",
+        "Condense what's on my screen",
+        "What's the main takeaway from my screen",
+        "Summarize the visible information",
+        "What are the key details on screen",
+        "Give me a brief overview of my screen",
+        "What's the essential information shown",
+        "Summarize what I'm seeing",
+        
+        // ── Specific content questions (about visible items) ──────
+        "What's this email about",
+        "What does this email say",
+        "Who sent this email",
+        "What's this message about",
+        "What does this section mean",
+        "What does this lease section mean",
+        "What's this clause about",
+        "What does this paragraph say",
+        "What's this disclaimer about",
+        "What does this warning mean",
+        "What's this notification about",
+        "What does this error say",
+        "Who is this person",
+        "Who is this person at the bottom left",
+        "Who is in this photo",
+        "What's this person's name",
+        "What's this document about",
+        "What does this form say",
+        "What's this page about",
+        "What does this article say",
+        "What's this website about",
+        "What does this popup say",
+        "What's this dialog about",
+        "What does this button do",
+        "What's this icon for",
+        "What does this menu say",
+        "What's this field for",
+        "What does this label say",
+        "What's this image showing",
+        "What does this chart mean",
+        "What's this graph about",
+        "What does this table show",
+        "What's this list about",
+        "What does this text say",
+        "What's this heading about",
+        "What does this title mean",
+        "What's this link for",
+        "What does this option do",
+        
+        // ── Action-oriented requests (editing, responding, fixing) ────
+        "Polish up this email",
+        "Clean up this email",
+        "Make this email more professional",
+        "Improve this email",
+        "Rewrite this email better",
+        "Fix any grammar issues with this",
+        "Check grammar in this email",
+        "Are there any grammar mistakes",
+        "Correct the grammar",
+        "Fix spelling errors",
+        "Proofread this",
+        "Check this for errors",
+        "Fix any issues with this email",
+        "Correct any mistakes",
+        "Give me a response to this email",
+        "Draft a response to this email",
+        "Write a reply to this",
+        "Respond to this email",
+        "Help me reply to this",
+        "What should I say back",
+        "Compose a response",
+        "Draft a reply",
+        "Answer this question on my screen",
+        "What's the answer to this question",
+        "Help me answer this",
+        "Solve this problem on my screen",
+        "What's the solution to this",
+        "Translate this to Spanish",
+        "Translate this email",
+        "Convert this to another language",
+        "Make this shorter",
+        "Summarize this into one sentence",
+        "Condense this email",
+        "Make this more concise",
+        "Expand on this",
+        "Make this longer",
+        "Add more details to this",
+        "Rephrase this",
+        "Say this differently",
+        "Reword this",
+        "Simplify this",
+        "Make this easier to understand",
+        "Explain this in simple terms",
+        
+        // ── Translation requests (screen-specific) ────
+        "Translate this chinese on the screen to english",
+        "Translate this text on my screen",
+        "What does this chinese text say",
+        "What does this spanish text mean",
+        "Translate the text on my screen to french",
+        "Convert this japanese to english",
+        "What does this german text say",
+        "Translate this korean on the screen",
+        "What's the english translation of this",
+        "Translate this russian text",
+        "What does this arabic say",
+        "Translate the chinese characters on my screen",
+        "Convert this text to english",
+        "What's this in english",
+        "Translate this to my language",
+        "What does this foreign text say",
+        "Translate the text I'm looking at",
+        "What's the translation of this",
+        "Convert this to spanish",
+        "Translate what's on my screen",
+        
+        // ── More action-oriented screen queries ────
+        "Polish up this text on my screen",
+        "Fix the grammar on this screen",
+        "Correct this email I'm writing",
+        "Improve this message on my screen",
+        "Rewrite this better",
+        "Make this text more professional",
+        "Check this for spelling errors",
+        "Proofread what's on my screen",
+        "Fix any mistakes in this text",
+        "Make this sound better",
+        "Improve the wording of this",
+        "Clean up this text",
+        "Make this more concise on my screen",
+        "Shorten this text",
+        "Expand on what I wrote",
+        "Add more details to this text",
+        "Rephrase what's on my screen",
+        "Say this differently on my screen",
+        "Simplify this text on my screen"
       ],
 
       question: [
@@ -890,7 +1184,7 @@ class DistilBertIntentParser {
         "Do you retain info across browser tabs?",
         "Can you export my memory as JSON?",
         
-        // ── "What is X" questions (definitions/explanations) ───────
+        // ── "What is X" questions (definitions/explanations - TECHNICAL CONCEPTS ONLY) ───────
         "What's an API?",
         "What is MCP?",
         "What's a webhook?",
@@ -909,8 +1203,7 @@ class DistilBertIntentParser {
         "Ok what's an API",
         "So what is REST",
         "Alright what's Docker",
-        "What's that mean",
-        "What does that stand for",
+        "What does JWT stand for",
         "Cool what's the meaning of life",
         
         // ── Follow-up questions (asking for more details) ───────
@@ -957,9 +1250,9 @@ class DistilBertIntentParser {
         "How can I improve my workflow?",
         "How do I choose between X and Y?",
         
-        // ── Troubleshooting questions ──────────────────────────
+        // ── Troubleshooting questions (TECHNICAL ISSUES - may use screen context) ──────────────────────────
         "Why is my code not working?",
-        "Why am I getting this error?",
+        "Why am I getting this error in my terminal?",
         "Why is the server not starting?",
         "Why can't I connect to the database?",
         "Why is my app so slow?",
@@ -974,10 +1267,19 @@ class DistilBertIntentParser {
         "Why is my CSS not applying?",
         "Why is the API returning null?",
         "What's wrong with my code?",
+        "What's wrong with this code?",
         "What's causing this bug?",
+        "What's causing this bug in my code?",
         "What does this error mean?",
+        "What does this error code mean?",
         "What's the issue here?",
+        "What's the issue with my configuration?",
         "What am I doing wrong?",
+        "What am I doing wrong in my implementation?",
+        "Help me debug this code",
+        "Help me fix this error",
+        "Why isn't this working?",
+        "What's the problem with my code?",
         
         // ── Comparison and recommendation questions ───────────────
         "Should I use React or Vue?",
@@ -1090,40 +1392,6 @@ class DistilBertIntentParser {
         "What’s cooking?",
         "Yo yo yo",
         "Hey there, genius"
-      ],
-
-      context: [
-        // ── Original ─────────────────────────────────────
-        "What did we talk about earlier?",
-        "What was I saying before?",
-        "Can you remind me of our conversation?",
-        "What were we discussing?",
-        "Go back to what we were talking about",
-        "What were we discussing before this?",
-        "Summarize our last session",
-        "Remind me what I asked 10 minutes ago",
-        "Continue from where we left off",
-        "What's the plan we outlined earlier?",
-        "Show me the earlier steps",
-
-        // ── New – fuzzy time, multi-turn, session ───────
-        "Pick up where we stopped yesterday",
-        "What was the last code snippet you gave me?",
-        "Remind me of the grocery list from this morning",
-        "What were the three options we weighed?",
-        "Show the decision matrix we built",
-        "What was the URL you shared 5 mins ago?",
-        "Recap the pros/cons we listed",
-        "What was the final command I ran?",
-        "Bring me back to the API design discussion",
-        "What did I decide about the color scheme?",
-        "Show the timer I started earlier",
-        "What was the exact error message?",
-        "Continue the story we were writing",
-        "What were the meeting action items?",
-        "Remind me of the password we generated",
-        "What was the last search query?",
-        "Show the table we sketched"
       ]
     };
     

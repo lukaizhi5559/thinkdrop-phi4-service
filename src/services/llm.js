@@ -9,7 +9,7 @@ class LLMService {
   constructor() {
     this.initialized = false;
     this.apiUrl = process.env.PHI4_API_URL || 'http://127.0.0.1:11434/api/generate';
-    this.model = process.env.PHI4_MODEL || 'phi4';
+    this.model = process.env.OLLAMA_MODEL || 'qwen2:1.5b';
     this.enabled = process.env.ENABLE_PHI4 === 'true';
     
     // Performance settings from environment with optimized defaults
@@ -171,10 +171,12 @@ class LLMService {
     if (systemInstructions) {
       prompt += `${systemInstructions}\n\n`;
       console.log('📋 [GENERAL-ANSWER] Using system instructions from orchestrator');
-    }
-    
-    // Enhanced system prompt with explicit memory usage instructions
-    prompt += `You are an AI assistant helping a user. You have access to multiple context layers:
+      // If custom system instructions provided, skip generic instructions
+      // This is critical for screen_intelligence and vision intents
+    } else {
+      // Only add generic instructions if no custom instructions provided
+      // Enhanced system prompt with explicit memory usage instructions
+      prompt += `You are an AI assistant helping a user. You have access to multiple context layers:
 
 1. **webSearchResults**: Current information from the web (use for factual questions about the world)
 2. **conversationHistory**: Recent back-and-forth messages (use for immediate context and to recall what was discussed)
@@ -195,7 +197,12 @@ CRITICAL RULES:
 - Do not simulate conversations or add role labels
 
 `;
+    }
 
+    // For screen_intelligence and vision intents, skip adding extra context
+    // The query already contains all necessary context
+    const hasCustomInstructions = !!systemInstructions;
+    
     // Check if this is a factual query
     // BEST INDICATOR: If web search results are present, it's DEFINITELY a factual query
     // Otherwise, check if it's a user preference query using patterns
@@ -203,6 +210,8 @@ CRITICAL RULES:
     const isUserPreferenceQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
     const isFactualQuery = hasWebResults || isUserPreferenceQuery;
     
+    // Only add context if no custom instructions (for screen_intelligence, query has everything)
+    if (!hasCustomInstructions) {
     // 1. Add web search results if available (highest priority for factual questions)
     // ULTRA-OPTIMIZED: Only use top 1 result, 120 chars for fastest processing
     if (webSearchResults && webSearchResults.length > 0) {
@@ -313,6 +322,7 @@ CRITICAL RULES:
         console.log(`📚 [GENERAL-ANSWER] Using ${cleanedHistory.length} messages (${recentMessages.length} recent + ${relevantOlderMessages.length} relevant older)`);
       }
     }
+    } // End if (!hasCustomInstructions)
     
     // 4. Add current query with clear instruction
     prompt += `USER: ${query}\nASSISTANT:`;
