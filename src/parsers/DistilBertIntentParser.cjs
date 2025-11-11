@@ -269,7 +269,33 @@ class DistilBertIntentParser {
         "Current market cap of NVIDIA",
         "How do I enable 2FA on GitHub with an authenticator app?",
         "Give me a Python snippet to resize images with Pillow",
-        "What’s the current base rate of the ECB?"
+        "What's the current base rate of the ECB?",
+        
+        // ── Link and resource requests ────────────────────────
+        "Give me links to",
+        "Can you give me links to",
+        "Find me links about",
+        "Show me links for",
+        "Get me some links on",
+        "Find links to commentary on",
+        "Give me resources about",
+        "Find articles about",
+        "Search for information on",
+        "Look up information about",
+        "Find commentary on",
+        "Search for commentary on",
+        "Get me commentary on",
+        "Find resources about",
+        "Search the web for",
+        "Look up on the web",
+        "Find information on the web about",
+        "Search online for",
+        "Find me information about",
+        "Look for articles on",
+        "Search for articles about",
+        "Find me some resources on",
+        "Get information about",
+        "Search for resources on"
       ],
 
       general_knowledge: [
@@ -919,6 +945,36 @@ class DistilBertIntentParser {
         "Read the source code",
         "What's visible in the IDE",
         "Analyze the code on screen",
+        
+        // ── Terminal and console queries ──────────────────────────
+        "What's in the terminal",
+        "What's in the console",
+        "What's in the warp console",
+        "What's in the terminal window",
+        "Read the terminal output",
+        "Read the console output",
+        "What's showing in the terminal",
+        "What's showing in the console",
+        "What does the terminal say",
+        "What does the console say",
+        "What's in the command line",
+        "Read the terminal",
+        "Read the console",
+        "What's the terminal showing",
+        "What's the console showing",
+        "What's in the iTerm window",
+        "What's in the warp window",
+        "Show me the terminal output",
+        "Show me the console output",
+        "What commands are in the terminal",
+        "What's running in the terminal",
+        "What's running in the console",
+        "Read the terminal logs",
+        "Read the console logs",
+        "What errors are in the terminal",
+        "What errors are in the console",
+        "What's the terminal output",
+        "What's the console output",
         
         // ── Document and content reading ──────────────────────────
         "What's in this document",
@@ -1987,8 +2043,8 @@ class DistilBertIntentParser {
     const hasSportsQuery = lowerMessage.match(/\b(score|game|match|won|lost|team|player)\b/);
     
     // 🔍 NEW: Boost web_search for code/tutorial requests
-    const hasCodeRequest = lowerMessage.match(/\b(give me|show me|how do i|how to|example of|tutorial|code for|script)\b/);
-    const hasProgrammingContext = lowerMessage.match(/\b(python|javascript|node|react|api|function|class|code|script|program|html|css|sql|database|docker|kubernetes)\b/);
+    const hasCodeRequest = lowerMessage.match(/\b(give me|show me|how do i|how to|example of|tutorial|code for|script|can.*be rewritten|rewrite|refactor|improve|optimize)\b/);
+    const hasProgrammingContext = lowerMessage.match(/\b(python|javascript|node|react|api|function|class|code|script|program|html|css|sql|database|docker|kubernetes|applescript|electron)\b/);
     
     // Strong boost for current events
     if (hasCurrentEventIndicators) {
@@ -2038,6 +2094,21 @@ class DistilBertIntentParser {
       if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon)/)) {
         scores.greeting *= 1.3;
       }
+    }
+    
+    // 🎯 NEW: Penalize screen_intelligence if highlighted text is present
+    // When text is already highlighted/selected, we don't need screen analysis
+    const hasHighlightedText = message.includes('[Selected text') || 
+                              message.includes('[selected text') ||
+                              message.includes('Selected text from') ||
+                              message.includes('selected text from') ||
+                              message.match(/\[.*text.*from.*\]/i);
+    
+    if (hasHighlightedText) {
+      scores.screen_intelligence = 0.001;  // Force to near zero - we already have the text
+      scores.question *= 3.0;              // Very strong boost to question intent instead
+      scores.web_search *= 2.5;            // Very strong boost to web search for factual queries
+      console.log('🎯 [INTENT] Detected highlighted text, forcing screen_intelligence to 0.001');
     }
     
     // Normalize scores back to 0-1 range
