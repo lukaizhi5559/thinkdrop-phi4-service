@@ -228,6 +228,30 @@ const webSearchResponses = [
     "Checking online resources..."
 ];
 
+const screenIntelligenceResponses = [
+    "Analyzing your screen...",
+    "Scanning screen content...",
+    "Processing screen data...",
+    "Reading what's on your screen...",
+    "Capturing screen context...",
+    "Analyzing visible content...",
+    "Scanning the active window...",
+    "Processing visual information...",
+    "Reading screen elements...",
+    "Gathering screen intelligence..."
+];
+
+const screenProcessingResponses = [
+    "⏳ Still scanning your screen... Give me a moment.",
+    "⏳ Screen analysis in progress... Just a sec.",
+    "⏳ Processing screen content... Almost there.",
+    "⏳ Capturing screen data... One moment please.",
+    "⏳ Reading your screen... This will just take a moment.",
+    "⏳ Screen scan in progress... Hold tight.",
+    "⏳ Analyzing visible content... Just a moment.",
+    "⏳ Still processing screen... Almost ready."
+];
+
 const greetingResponses = [
     "Hello! How can I help you today?",
     "Hi there! What can I do for you?",
@@ -287,7 +311,7 @@ const IntentResponses = {
    * @param {Array} entities - Extracted entities
    * @returns {string} Suggested response
    */
-  getSuggestedResponse(intent, message, entities = []) {
+  getSuggestedResponse(intent, message, entities = [], context = {}) {
     switch (intent) {
       case 'memory_store':
         return this._getMemoryStoreResponse(message, entities);
@@ -306,6 +330,9 @@ const IntentResponses = {
 
       case 'web_search':
         return this._getWebSearchResponse(message);
+
+      case 'screen_intelligence':
+        return this._getScreenIntelligenceResponse(message, context);
 
       case 'context':
         return this._getContextResponse(message);
@@ -378,6 +405,21 @@ const IntentResponses = {
     return webSearchResponses[randomIndex];
   },
 
+  _getScreenIntelligenceResponse(_message, context = {}) {
+    // Check if screen is still being processed
+    const isProcessing = context.screenProcessing || context.isAnalyzing;
+    
+    if (isProcessing) {
+      // Return "still processing" message
+      const randomIndex = Math.floor(Math.random() * screenProcessingResponses.length);
+      return screenProcessingResponses[randomIndex];
+    }
+    
+    // Return normal screen intelligence response
+    const randomIndex = Math.floor(Math.random() * screenIntelligenceResponses.length);
+    return screenIntelligenceResponses[randomIndex];
+  },
+
   _getContextResponse(_message) {
     return "Let me review our conversation history...";
   },
@@ -399,6 +441,8 @@ const IntentResponses = {
       sanitizeWeb: "Processing search results...",
       retrieveMemory: "Checking your memories...",
       filterMemory: "Filtering relevant information...",
+      screenIntelligence: "Analyzing your screen...",
+      checkScreenCache: "Checking screen cache...",
       answer: "Generating response...",
       validateAnswer: "Validating answer quality...",
       storeConversation: "Saving conversation...",
@@ -406,6 +450,16 @@ const IntentResponses = {
     };
 
     return nodeMessages[nodeName] || `Processing ${nodeName}...`;
+  },
+
+  /**
+   * Check if screen is currently being processed
+   * @param {Object} state - Current orchestrator state
+   * @returns {boolean} True if screen is being analyzed
+   */
+  isScreenProcessing(state = {}) {
+    // Check if we're in screen intelligence flow and no screen context yet
+    return state.intent?.type === 'screen_intelligence' && !state.screenContext;
   }
 };
 

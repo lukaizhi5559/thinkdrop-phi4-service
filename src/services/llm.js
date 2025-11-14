@@ -38,11 +38,40 @@ class LLMService {
       const testUrl = this.apiUrl.replace('/api/generate', '/api/tags');
       await axios.get(testUrl, { timeout: 2000 });
       console.log(`✅ LLM Service initialized (Ollama at ${this.apiUrl})`);
+      
+      // Warmup: Load model into memory
+      await this.warmupModel();
     } catch (error) {
       console.warn('⚠️  Ollama not reachable, LLM will use fallback responses');
     }
     
     this.initialized = true;
+  }
+
+  async warmupModel() {
+    console.log(`🔥 Warming up model ${this.model}...`);
+    const startTime = Date.now();
+    
+    try {
+      await axios.post(this.apiUrl, {
+        model: this.model,
+        prompt: 'Hello',
+        stream: false,
+        keep_alive: -1, // Keep model loaded indefinitely
+        options: {
+          num_predict: 1, // Only generate 1 token for warmup
+          temperature: 0.3,
+          num_ctx: 512 // Minimal context for warmup
+        }
+      }, {
+        timeout: 30000 // 30 second timeout for initial load
+      });
+      
+      const elapsed = Date.now() - startTime;
+      console.log(`✅ Model warmed up and loaded into memory (${elapsed}ms)`);
+    } catch (error) {
+      console.warn(`⚠️  Model warmup failed: ${error.message}`);
+    }
   }
 
   async generateAnswer(query, options = {}) {
@@ -99,6 +128,7 @@ class LLMService {
         model: modelToUse,
         prompt: prompt,
         stream: false,
+        keep_alive: -1, // ⚡ Keep model loaded in memory indefinitely
         options: {
           temperature: options.temperature || this.defaultTemperature,
           num_predict: options.maxTokens || this.defaultMaxTokens,
@@ -365,6 +395,7 @@ CRITICAL RULES:
         model: modelToUse,
         prompt: prompt,
         stream: true, // ⚡ Enable streaming
+        keep_alive: -1, // ⚡ Keep model loaded in memory indefinitely
         options: {
           temperature: options.temperature || this.defaultTemperature,
           num_predict: options.maxTokens || this.defaultMaxTokens,

@@ -30,6 +30,7 @@ const knowledgeRoutes = require('./routes/knowledge.cjs');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
+const llmService = require('./services/llm');
 const modelSelector = require('./utils/model-selector');
 
 const app = express();
@@ -108,6 +109,9 @@ async function startServer() {
     console.log(`   Port: ${PORT}`);
     console.log(`   Host: ${HOST}`);
     console.log(`   🤖 Model: ${modelSelection.model} (${modelSelection.reason})`);
+    
+    // Warm up LLM (always enabled for better UX)
+    await llmService.initialize();
     
     // Warm up parsers if enabled
     if (process.env.MODEL_WARMUP_ON_START === 'true') {
