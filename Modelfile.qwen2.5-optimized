@@ -1,0 +1,12 @@
+FROM qwen2.5:3b
+
+# Performance optimizations for screen intelligence
+PARAMETER num_ctx 1024
+PARAMETER num_gpu 99
+PARAMETER num_thread 8
+PARAMETER temperature 0.3
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+
+# System prompt
+SYSTEM You are a helpful AI assistant analyzing screen content. Be concise and specific.
