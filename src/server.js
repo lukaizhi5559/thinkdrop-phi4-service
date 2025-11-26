@@ -32,6 +32,7 @@ const knowledgeRoutes = require('./routes/knowledge.cjs');
 const intentParsingService = require('./services/intentParsing');
 const llmService = require('./services/llm');
 const modelSelector = require('./utils/model-selector');
+const ollamaManager = require('./utils/ollama-manager');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -109,6 +110,13 @@ async function startServer() {
     console.log(`   Port: ${PORT}`);
     console.log(`   Host: ${HOST}`);
     console.log(`   🤖 Model: ${modelSelection.model} (${modelSelection.reason})`);
+    
+    // Ensure Ollama is running
+    const ollamaReady = await ollamaManager.ensureRunning();
+    if (!ollamaReady) {
+      console.error('❌ Failed to start Ollama. Please start it manually: ollama serve');
+      console.error('   The service will start but LLM features will not work.');
+    }
     
     // Warm up LLM (always enabled for better UX)
     await llmService.initialize();

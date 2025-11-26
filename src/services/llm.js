@@ -14,6 +14,7 @@ class LLMService {
     
     // Performance settings from environment with optimized defaults
     this.defaultMaxTokens = parseInt(process.env.PHI4_MAX_TOKENS) || 250;
+    this.defaultNumPredict = parseInt(process.env.PHI4_NUM_PREDICT) || this.defaultMaxTokens; // Ollama-specific
     this.defaultContextLength = parseInt(process.env.PHI4_CONTEXT_LENGTH) || 4096;
     this.defaultNumThread = parseInt(process.env.PHI4_NUM_THREAD) || 8;
     this.defaultNumGpu = parseInt(process.env.PHI4_NUM_GPU) || 1;
@@ -118,11 +119,11 @@ class LLMService {
     }
 
     try {
-      const prompt = this._buildPrompt(query, memories, conversationHistory, webSearchResults, systemInstructions);
+      const prompt = this._buildPrompt(query, memories, conversationHistory, webSearchResults, systemInstructions, options);
       
       const modelToUse = options.model || this.model;
       console.log(`🤖 [LLM] Using model: ${modelToUse}`);
-      console.log(`⚡ [LLM] Performance settings: maxTokens=${this.defaultMaxTokens}, contextLength=${this.defaultContextLength}, numThread=${this.defaultNumThread}`);
+      console.log(`⚡ [LLM] Performance settings: maxTokens=${options.maxTokens || this.defaultMaxTokens}, contextLength=${options.contextLength || this.defaultContextLength}, numThread=${this.defaultNumThread}`);
       
       const response = await axios.post(this.apiUrl, {
         model: modelToUse,
@@ -131,7 +132,7 @@ class LLMService {
         keep_alive: -1, // ⚡ Keep model loaded in memory indefinitely
         options: {
           temperature: options.temperature || this.defaultTemperature,
-          num_predict: options.maxTokens || this.defaultMaxTokens,
+          num_predict: options.maxTokens || this.defaultNumPredict,
           top_k: options.topK || 40,
           top_p: options.topP || this.defaultTopP,
           num_ctx: options.contextLength || this.defaultContextLength,
@@ -194,7 +195,13 @@ class LLMService {
     }
   }
 
-  _buildPrompt(query, memories, conversationHistory, webSearchResults = [], systemInstructions = '') {
+  _buildPrompt(query, memories, conversationHistory, webSearchResults = [], systemInstructions = '', options = {}) {
+    // 🚀 FAST MODE: Skip all system prompts for simple queries
+    if (options.fastMode) {
+      console.log('⚡ [FAST-MODE] Using minimal prompt (no system instructions)');
+      return `Answer briefly: ${query}`;
+    }
+    
     // Start with system instructions if provided (highest priority)
     let prompt = '';
     
@@ -243,12 +250,20 @@ CRITICAL RULES:
     // Only add context if no custom instructions (for screen_intelligence, query has everything)
     if (!hasCustomInstructions) {
     // 1. Add web search results if available (highest priority for factual questions)
-    // ULTRA-OPTIMIZED: Only use top 1 result, 120 chars for fastest processing
+    // Use top 3 results with 300 chars each for better context
     if (webSearchResults && webSearchResults.length > 0) {
-      prompt += 'INFO: ';
-      const truncated = webSearchResults[0].text.substring(0, 120);
-      prompt += `${truncated}...\n\n`;
-      console.log(`🌐 [GENERAL-ANSWER] Using 1 web result (120 chars)`);
+      prompt += 'WEB SEARCH RESULTS:\n';
+      const resultsToUse = Math.min(3, webSearchResults.length);
+      for (let i = 0; i < resultsToUse; i++) {
+        const result = webSearchResults[i];
+        const truncated = result.text.substring(0, 300);
+        prompt += `${i + 1}. ${truncated}...\n`;
+        if (result.url) {
+          prompt += `   Source: ${result.url}\n`;
+        }
+      }
+      prompt += '\n';
+      console.log(`🌐 [GENERAL-ANSWER] Using ${resultsToUse} web results (300 chars each)`);
     }
     
     // 2. Add system messages from conversation history
@@ -398,7 +413,7 @@ CRITICAL RULES:
         keep_alive: -1, // ⚡ Keep model loaded in memory indefinitely
         options: {
           temperature: options.temperature || this.defaultTemperature,
-          num_predict: options.maxTokens || this.defaultMaxTokens,
+          num_predict: options.maxTokens || this.defaultNumPredict,
           top_k: options.topK || 40,
           top_p: options.topP || this.defaultTopP,
           num_ctx: options.contextLength || this.defaultContextLength,
