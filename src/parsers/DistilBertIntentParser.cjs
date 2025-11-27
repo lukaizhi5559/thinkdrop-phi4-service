@@ -75,6 +75,7 @@ class DistilBertIntentParser {
         "Note down my car's VIN number",
         "Remember my favorite coffee is oat milk latte",
         "Set a reminder for my dentist appointment next Friday at 3pm",
+        "Set a reminder that I have appt. in two weeks",
         "Remind me about the meeting tomorrow at 10am",
         "I have an appointment next week on Tuesday. Set a reminder",
 
@@ -98,7 +99,47 @@ class DistilBertIntentParser {
         "Remember my preferred seat is 12A on Delta",
         "Save the vet appointment for Max on 11/18 at 3:45pm",
         "Keep in mind the sprint review is every other Thursday 10am",
-        "Log that I finished reading 'Atomic Habits' today"
+        "Log that I finished reading 'Atomic Habits' today",
+        
+        // ── "I have" patterns (to fix memory_retrieve confusion) ───────
+        "I have an appt for next week Sunday 2pm at the dentist",
+        "I have a meeting tomorrow at 10am with the team",
+        "I have a doctor's appointment on Friday at 3pm",
+        "I have a dentist appointment next Tuesday",
+        "I have an interview scheduled for Monday 9am",
+        "I have a flight on December 15th at 6am",
+        "I have a haircut appointment this Thursday at 2pm",
+        "I have a vet appointment for my dog next week",
+        "I have a conference call at 4pm today",
+        "I have a deadline on Friday for the project",
+        "I have a reservation at the restaurant for 7pm Saturday",
+        "I have a gym session booked for tomorrow morning",
+        "I have an oil change scheduled for next Monday",
+        "I have a piano lesson every Wednesday at 5pm",
+        "I have a package arriving on Tuesday",
+        
+        // ── Explicit "to memory" / "remember this" patterns ───────
+        // These should NEVER be classified as screen_intelligence
+        "Record this alert to memory - VM5 sandbox_bundle:2 Electron Security Warning",
+        "Remember this error message for later",
+        "Save this to memory - API endpoint is https://api.example.com",
+        "Add this to memory - the password is abc123",
+        "Record this - meeting notes from today's standup",
+        "Remember this code snippet for future reference",
+        "Store this in memory - license key XYZ-789-ABC",
+        "Keep this in memory - server IP is 192.168.1.100",
+        "Record this warning message to memory",
+        "Remember this configuration setting",
+        "Save this error to memory for debugging",
+        "Add this alert to memory",
+        "Record this notification to memory",
+        "Remember this log entry",
+        "Store this message in memory",
+        "Keep this alert in memory",
+        "Save this warning to memory",
+        "Add this error message to memory",
+        "Record this to memory",
+        "Remember this for later"
       ],
 
       memory_retrieve: [
@@ -2861,21 +2902,6 @@ class DistilBertIntentParser {
     const topScore = sortedIntents[0][1];
     const secondScore = sortedIntents[1]?.[1] || 0;
     
-    // Intent priority for tie-breaking (when scores are very close)
-    const intentPriority = {
-      'screen_intelligence': 7,
-      'command_guide': 7,      // Highest priority for educational tutorials
-      'command_execute': 6,    // High priority for shell commands
-      // 'command_automate': 6,   // High priority for UI automation
-      'web_search': 5,         // Factual questions needing current data
-      'question': 4,           // General questions
-      'memory_retrieve': 3,    // Retrieving stored info
-      'command': 2,            // Legacy command intent
-      'context': 1,
-      'memory_store': 0,       // Lowest priority (avoid false positives)
-      'greeting': 0
-    };
-    
     // Only default to question if ALL scores are extremely low (< 0.15)
     // This prevents defaulting when web_search has highest score but low confidence
     if (topScore < 0.15) {
@@ -2883,16 +2909,11 @@ class DistilBertIntentParser {
       return 'question';
     }
     
-    // If scores are very close (within 0.1), use priority
-    if (Math.abs(topScore - secondScore) < 0.1) {
-      const topPriority = intentPriority[topIntent] || 0;
+    // Always choose the highest score - semantic search is more accurate than priority rules
+    // If scores are very close (within 0.05), log it but still choose highest score
+    if (Math.abs(topScore - secondScore) < 0.05) {
       const secondIntent = sortedIntents[1][0];
-      const secondPriority = intentPriority[secondIntent] || 0;
-      
-      if (secondPriority > topPriority) {
-        console.log(`🔄 Tie-breaking: ${topIntent} (${topScore.toFixed(3)}) vs ${secondIntent} (${secondScore.toFixed(3)}) → choosing ${secondIntent} (higher priority)`);
-        return secondIntent;
-      }
+      console.log(`⚖️ Close scores: ${topIntent} (${topScore.toFixed(3)}) vs ${secondIntent} (${secondScore.toFixed(3)}) → choosing ${topIntent} (highest score)`);
     }
     
     return topIntent;

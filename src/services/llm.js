@@ -9,7 +9,7 @@ class LLMService {
   constructor() {
     this.initialized = false;
     this.apiUrl = process.env.PHI4_API_URL || 'http://127.0.0.1:11434/api/generate';
-    this.model = process.env.OLLAMA_MODEL || 'qwen2:1.5b';
+    this.model = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
     this.enabled = process.env.ENABLE_PHI4 === 'true';
     
     // Performance settings from environment with optimized defaults
@@ -211,44 +211,27 @@ class LLMService {
       // If custom system instructions provided, skip generic instructions
       // This is critical for screen_intelligence and vision intents
     } else {
-      // Only add generic instructions if no custom instructions provided
-      // Enhanced system prompt with explicit memory usage instructions
-      prompt += `You are an AI assistant helping a user. You have access to multiple context layers:
-
-1. **webSearchResults**: Current information from the web (use for factual questions about the world)
-2. **conversationHistory**: Recent back-and-forth messages (use for immediate context and to recall what was discussed)
-3. **memories**: Long-term factual information about the user from previous conversations (use for questions about user preferences, history, or past statements)
-
-CRITICAL RULES:
-- Always respond from the ASSISTANT's perspective (use "you" for the user, never "I")
-- **PRONOUN RESOLUTION**: When the user uses pronouns like "he", "she", "it", "they", "him", "her", FIRST check the conversation history to identify who/what is being referenced BEFORE using web search results
-- When the user asks "what did we talk about" or "what have we discussed", REVIEW THE CONVERSATION HISTORY and summarize the topics
-- When the user asks "what do I like/love/prefer" or "what is my favorite", CHECK THE MEMORIES FIRST
-- If memories exist and are relevant, USE THEM in your response
-- If NO memories are provided or memories don't contain the answer, say "I don't have that information stored yet"
-- NEVER make up or invent information that isn't in the memories or conversation history
-- NEVER make negative inferences: If user says "I love X", DO NOT assume they dislike Y
-- DO NOT infer preferences from unrelated memories: "loves roses" does NOT mean "dislikes dandelions"
-- Only state facts that are EXPLICITLY mentioned - do not infer, assume, or extrapolate
-- Answer naturally in 1-2 sentences
-- Do not simulate conversations or add role labels
-
-`;
+      // Ultra-minimal instructions: semantic search already filtered the context
+      // LLM just needs to format it into a natural response
+      prompt += `Format the provided information into a helpful response. Be direct and concise.\n\n`;
     }
 
-    // For screen_intelligence and vision intents, skip adding extra context
-    // The query already contains all necessary context
-    const hasCustomInstructions = !!systemInstructions;
-    
-    // Check if this is a factual query
-    // BEST INDICATOR: If web search results are present, it's DEFINITELY a factual query
-    // Otherwise, check if it's a user preference query using patterns
+    // Check if this is a factual query vs personal memory query
+    // Use the intent that was already classified by DistilBERT (more accurate than regex)
+    // FACTUAL: web_search, question, general_knowledge intents
+    // PERSONAL: memory_retrieve, memory_store intents
     const hasWebResults = webSearchResults && webSearchResults.length > 0;
-    const isUserPreferenceQuery = /\b(what|my|favorite|like|love|prefer|do i)\b/i.test(query);
-    const isFactualQuery = hasWebResults || isUserPreferenceQuery;
+    const intent = options.intent || 'general_query';
+    const isPersonalMemoryQuery = intent === 'memory_retrieve' || intent === 'memory_store';
+    const isFactualQuery = hasWebResults && !isPersonalMemoryQuery; // Only factual if web results AND not personal memory
     
-    // Only add context if no custom instructions (for screen_intelligence, query has everything)
-    if (!hasCustomInstructions) {
+    // For screen_intelligence and vision intents, the query already contains screen context
+    // But we still need to add web results, memories, and conversation history
+    const hasCustomInstructions = !!systemInstructions;
+    const skipExtraContext = hasCustomInstructions && (query.includes('SCREEN CONTEXT') || query.includes('USER REQUEST:'));
+    
+    // Add context (unless it's screen_intelligence with context already in query)
+    if (!skipExtraContext) {
     // 1. Add web search results if available (highest priority for factual questions)
     // Use top 3 results with 300 chars each for better context
     if (webSearchResults && webSearchResults.length > 0) {
@@ -374,6 +357,7 @@ CRITICAL RULES:
     
     console.log('📚 [GENERAL-ANSWER] System prompt length:', prompt.length);
     console.log('📚 [GENERAL-ANSWER] Is factual query:', isFactualQuery);
+    console.log('📝 [GENERAL-ANSWER] Full prompt:\n' + '='.repeat(80) + '\n' + prompt + '\n' + '='.repeat(80));
     
     return prompt;
   }
@@ -382,7 +366,7 @@ CRITICAL RULES:
     if (!this.initialized) {
       await this.initialize();
     }
-
+    
     // Extract context same as non-streaming
     const memories = options.context?.memories || [];
     const conversationHistory = options.context?.conversationHistory || [];
@@ -403,6 +387,8 @@ CRITICAL RULES:
 
     try {
       const prompt = this._buildPrompt(query, memories, conversationHistory, webSearchResults, systemInstructions);
+      console.log('🌊 [STREAM] Prompt length:', prompt.length);
+      console.log('🌊 [STREAM] Full prompt:\n' + '='.repeat(80) + '\n' + prompt + '\n' + '='.repeat(80));
       const modelToUse = options.model || this.model;
 
       // Make streaming request to Ollama
