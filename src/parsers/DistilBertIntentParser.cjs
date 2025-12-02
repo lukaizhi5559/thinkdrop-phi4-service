@@ -19,7 +19,7 @@ class DistilBertIntentParser {
     this.intentLabels = [
       'screen_intelligence', // Primary screen analysis (UI elements, browser content, desktop items)
       'command_execute',     // Shell/OS commands (simple, direct execution)
-      // 'command_automate',    // Nut.js UI automation (complex multi-step workflows)
+      'command_automate',    // Nut.js UI automation (complex multi-step workflows)
       // 'command_guide',       // Educational/tutorial mode ("show me how")
       'memory_store',
       'memory_retrieve',
@@ -139,7 +139,35 @@ class DistilBertIntentParser {
         "Save this warning to memory",
         "Add this error message to memory",
         "Record this to memory",
-        "Remember this for later"
+        "Remember this for later",
+        
+        // ── Screen Intelligence + Memory Store patterns ───────
+        // User wants to save what they're looking at on screen
+        "Remember this error on my screen",
+        "Save this error message I'm seeing",
+        "Record this bug for later",
+        "Remember what this code does",
+        "Save this configuration I'm looking at",
+        "Remember this UI layout",
+        "Store this error pattern I'm seeing",
+        "Remember this screen for later",
+        "Save what's on my screen to memory",
+        "Record this screen content",
+        "Remember this API key on screen",
+        "Save this password I'm looking at",
+        
+        // ── Command Automate + Memory Store patterns ──────────
+        // User wants to save workflows and preferences
+        "Remember this is my favorite browser",
+        "Save this workflow for next time",
+        "Remember this automation sequence",
+        "Store this command for later",
+        "Remember my preferred app for this",
+        "Save this as my usual workflow",
+        "Remember I always use Chrome for work",
+        "Save this as my default automation",
+        "Remember this is my go-to app",
+        "Store this command sequence"
       ],
 
       memory_retrieve: [
@@ -926,8 +954,7 @@ class DistilBertIntentParser {
       ],
 
       // COMMENTED: For now unti we get the rest of the app working smoothly
-      // command_automate: [
-      screen_intelligence: [
+      command_automate: [
          // ── Original ─────────────────────────────────────
         // NOTE: "Take a screenshot" removed - conflicts with vision intent
         // Vision service handles screen capture + analysis
@@ -1592,7 +1619,9 @@ class DistilBertIntentParser {
         "Press Space",
         "Press Arrow Down",
         "Press Command S",
-        
+      ],
+      
+      screen_intelligence: [
         // ── Screen description and analysis (merged from vision) ─
         "What do you see on my screen",
         "What's on my screen",
