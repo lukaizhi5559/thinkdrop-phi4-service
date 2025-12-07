@@ -8,7 +8,9 @@ const { exec, spawn } = require('child_process');
 class OllamaManager {
   constructor() {
     this.ollamaProcess = null;
-    this.ollamaUrl = process.env.PHI4_API_URL || 'http://localhost:11434';
+    // Extract base URL from PHI4_API_URL (remove /api/generate if present)
+    const apiUrl = process.env.PHI4_API_URL || 'http://localhost:11434';
+    this.ollamaUrl = apiUrl.replace(/\/api\/generate$/, '');
   }
 
   /**
@@ -18,10 +20,12 @@ class OllamaManager {
     try {
       const response = await fetch(`${this.ollamaUrl}/api/tags`, {
         method: 'GET',
-        signal: AbortSignal.timeout(2000) // 2 second timeout
+        signal: AbortSignal.timeout(5000) // 5 second timeout (increased from 2s)
       });
       return response.ok;
     } catch (error) {
+      // Log the error for debugging
+      console.log(`   ℹ️  Ollama check failed: ${error.message}`);
       return false;
     }
   }
@@ -46,7 +50,7 @@ class OllamaManager {
       await this.startOllama();
       
       // Wait for Ollama to be ready (max 10 seconds)
-      const maxWaitTime = 10000;
+      const maxWaitTime = 30000;
       const checkInterval = 500;
       let waited = 0;
       
@@ -60,7 +64,7 @@ class OllamaManager {
         }
       }
       
-      console.error('❌ Ollama failed to start within 10 seconds');
+      console.error('❌ Ollama failed to start within 30 seconds');
       return false;
     } catch (error) {
       console.error('❌ Failed to start Ollama:', error.message);
