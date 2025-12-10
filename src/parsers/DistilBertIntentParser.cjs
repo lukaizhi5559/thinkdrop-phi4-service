@@ -1345,6 +1345,17 @@ class DistilBertIntentParser {
         "Teach me how to combine Qwen and Stripe AI to detect fraud in transactions",
         "Show me how to combine ChatGPT and Klaviyo AI to segment customers with AI",
         "Guide me through using Claude and Attio AI to enrich CRM data with AI",
+        
+        // ── IMPORTANT: What is NOT web_search ──────────────────
+        // These are command_automate (action commands, not information queries):
+        // ❌ "Goto chatgpt find my project called Thinkdrop AI and do a search for how to use Stripe API"
+        // ❌ "Open Slack and then find the engineering channel"
+        // ❌ "Navigate to Notion and search for my meeting notes"
+        // ❌ "Go to Gmail and compose a new email"
+        // ❌ "Launch VSCode and open the project folder"
+        // 
+        // Key difference: web_search = asking for information ("What is...", "How much...", "Who is...")
+        //                 command_automate = telling AI to DO something ("Open...", "Go to...", "Launch...")
       ],
 
       general_knowledge: [
@@ -1745,6 +1756,74 @@ class DistilBertIntentParser {
         "Compose an email to the team",
         "Draft an email to support",
         "Send a message to John via email",
+        
+        // ── Multi-step automation commands ──────────────────
+        // Complex workflows with multiple actions (goto X, find Y, do Z)
+        "Goto chatgpt find my project called Thinkdrop AI and do a search for how to use Stripe API",
+        "Open Slack and then find the engineering channel",
+        "Navigate to Notion and search for my meeting notes",
+        "Go to Figma and find the design file called Homepage",
+        "Launch VSCode and open the project folder",
+        "Open Chrome and navigate to github.com",
+        "Go to Gmail and compose a new email",
+        "Open Spotify and play my workout playlist",
+        "Launch Terminal and run the build script",
+        "Open Discord and join the voice channel",
+        "Go to Zoom and start a new meeting",
+        "Open Calendar and create a new event",
+        "Navigate to Twitter and post a tweet",
+        "Go to LinkedIn and send a connection request",
+        "Open YouTube and search for React tutorials",
+        "Launch Postman and test the API endpoint",
+        "Go to Trello and create a new card",
+        "Open Jira and update the ticket status",
+        "Navigate to Confluence and create a new page",
+        "Go to Google Drive and share the document",
+        "Open Dropbox and upload the file",
+        "Launch Docker and start the container",
+        "Go to AWS Console and check the EC2 instances",
+        "Open Vercel and deploy the latest build",
+        "Navigate to Netlify and check the deployment status",
+        "Go to Stripe Dashboard and view recent transactions",
+        "Open Firebase Console and check the database",
+        "Launch Xcode and build the iOS app",
+        "Go to App Store Connect and submit the update",
+        "Open Android Studio and run the emulator",
+        "Navigate to Play Console and publish the release",
+        
+        // ── Advanced Multi-Tool Automation Commands ──────────────────
+        // Concrete automation actions involving multiple tools/steps
+        "Open Mermaid Live Editor and create a UML diagram for my user authentication flow",
+        "Launch Draw.io and generate a network topology map for the production environment",
+        "Open VS Code and create a sequence diagram from the checkout user story",
+        "Go to Lucidchart and generate an org chart for the engineering team",
+        "Launch Miro and create a mind map from the product brainstorming notes",
+        "Open Figma and create component diagrams for the design system",
+        "Launch Cursor and write a Python script to process CSV files",
+        "Open CodeSandbox and prototype a React dashboard app",
+        "Go to VS Code and generate an API client for the Stripe integration",
+        "Launch Warp and write a shell script to backup the database",
+        "Open Copy.ai and generate 10 LinkedIn posts about our product launch",
+        "Go to Notion and convert the meeting notes into a blog draft",
+        "Launch Canva and create social media graphics for the campaign",
+        "Open Zapier and set up an automation to trigger emails from form submissions",
+        "Go to n8n and create a workflow to sync data between Airtable and Slack",
+        "Launch Google Sheets and create formulas to analyze the sales data",
+        "Open Power Automate and set up invoice approval automation",
+        "Go to Obsidian and link my project notes with related concepts",
+        "Launch Anki and create flashcards from the study notes",
+        "Open Readwise and export highlights to my note-taking app",
+        "Go to Zapier and create a Zap to post tweets from RSS feeds",
+        "Launch Airtable and set up a database for customer feedback",
+        "Open Typeform and create a survey with conditional logic",
+        "Go to Calendly and set up meeting scheduling with team availability",
+        "Launch Mailchimp and create an email campaign for the newsletter",
+        "Open HubSpot and set up lead scoring automation",
+        "Go to Intercom and configure chatbot responses for support",
+        "Launch Segment and set up event tracking for the web app",
+        "Open Mixpanel and create a funnel analysis dashboard",
+        "Go to Amplitude and set up user cohort analysis",
+        
         // ── Network actions ──────────────────
         "Ping 8.8.8.8",
         "Check if google.com is reachable",
