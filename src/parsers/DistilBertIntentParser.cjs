@@ -1824,6 +1824,59 @@ class DistilBertIntentParser {
         "Open Mixpanel and create a funnel analysis dashboard",
         "Go to Amplitude and set up user cohort analysis",
         
+        // ── UI Automation Commands (goto app, find element, type/click) ──────────────────
+        // CRITICAL: These are automation commands, NOT screen intelligence queries
+        "goto windsurf look for input field ask anything and type hello",
+        "goto windsurf find the input field and type hello",
+        "goto chatgpt find the input box and type my question",
+        "goto perplexity look for search bar and type my query",
+        "goto chrome find the address bar and type google.com",
+        "goto slack find the message input and type hello team",
+        "goto discord find the chat box and send a message",
+        "goto notion find the new page button and click it",
+        "goto figma find the create button and click it",
+        "goto vscode find the file menu and open settings",
+        "I need you to goto windsurf app find the file capabilities.ts and copy all the code",
+        "I need you to goto chatgpt paste that code there and ask it to examine the code",
+        "I need you to goto perplexity and search for react best practices",
+        "I need you to goto chrome and navigate to github.com",
+        "I need you to goto slack and send a message to the engineering channel",
+        "I need you to goto discord and join the voice channel",
+        "I need you to goto notion and create a new page",
+        "I need you to goto figma and open the design file",
+        "I need you to goto vscode and run the build command",
+        "I need you to goto terminal and execute npm install",
+        "goto windsurf app find the file capabilities.ts and copy all the code then open chatgpt paste that code there and ask it to examine the code for me then explain to me what it said for a response",
+        "goto chrome find google search and type python tutorial then click the first result",
+        "goto slack find engineering channel and post the meeting notes",
+        "goto notion find my project page and add a new task",
+        "goto vscode find the terminal and run npm start",
+        "goto spotify find my workout playlist and play it",
+        "goto gmail find compose button and write an email to john",
+        "goto calendar find new event button and create a meeting",
+        "goto trello find my board and add a new card",
+        "goto jira find the ticket and update the status",
+        "open windsurf find the search bar and search for capabilities.ts",
+        "open chatgpt find the input field and paste the code",
+        "open perplexity find the search box and type my question",
+        "open chrome find the url bar and go to github.com",
+        "open slack find the channel list and select engineering",
+        "open discord find the server and join the voice channel",
+        "open notion find the sidebar and create a new page",
+        "open figma find the file browser and open homepage design",
+        "open vscode find the command palette and run build",
+        "open terminal find the prompt and type ls -la",
+        "launch windsurf and search for capabilities.ts file",
+        "launch chatgpt and paste the code in the input",
+        "launch perplexity and search for react hooks",
+        "launch chrome and navigate to stackoverflow.com",
+        "launch slack and message the team channel",
+        "launch discord and start a voice call",
+        "launch notion and create a new database",
+        "launch figma and duplicate the component",
+        "launch vscode and open the integrated terminal",
+        "launch spotify and shuffle my liked songs",
+        
         // ── Network actions ──────────────────
         "Ping 8.8.8.8",
         "Check if google.com is reachable",
@@ -2323,6 +2376,64 @@ class DistilBertIntentParser {
         "Open up Google",
         "Open up Amazon",
         
+        // ── CRITICAL: UI Navigation (dock, folders, system UI) ────────────
+        // These are UI automation commands, NOT web searches or screen analysis
+        "Go to docker at the bottom",
+        "Go to the docker at the bottom",
+        "Go to docker and open textedit",
+        "Go to the dock at the bottom",
+        "Go to the dock and click textedit",
+        "Goto my application folder",
+        "Go to my application folder",
+        "Goto my applications folder",
+        "Go to my applications folder",
+        "Navigate to my application folder",
+        "Navigate to my applications folder",
+        "Open my application folder",
+        "Open my applications folder",
+        "Go to my desktop folder",
+        "Goto my desktop folder",
+        "Navigate to my desktop",
+        "Go to my downloads folder",
+        "Goto my downloads folder",
+        "Navigate to my downloads",
+        "Go to my documents folder",
+        "Goto my documents folder",
+        "Navigate to my documents",
+        "Open my projects folder on my desktop",
+        "Open my work folder on desktop",
+        "Open the gongzuo folder on my desktop",
+        "Open my photos folder",
+        "Navigate to my music folder",
+        "Go to my videos folder",
+        "Open the code folder on desktop",
+        "Open my personal folder",
+        "Go to the finder",
+        "Goto finder",
+        "Open finder",
+        "Go to the dock",
+        "Goto the dock",
+        "Click on the dock",
+        "Go to the menu bar",
+        "Goto the menu bar",
+        "Click on the menu bar",
+        "Go to the system tray",
+        "Goto the system tray",
+        "Go to the taskbar",
+        "Goto the taskbar",
+        "Go to the start menu",
+        "Goto the start menu",
+        "Open the start menu",
+        "Go to the launchpad",
+        "Goto the launchpad",
+        "Open launchpad",
+        "Go to spotlight",
+        "Goto spotlight",
+        "Open spotlight",
+        "Go to the notification center",
+        "Goto the notification center",
+        "Open notification center",
+        
         // ── GOTO + ACTION (navigation with search/action) ────────────
         // "Go online" patterns (navigate to web/browser)
         "Go online and do a google search for the latest AI for video",
@@ -2370,17 +2481,8 @@ class DistilBertIntentParser {
         "Browse to Google and search for flights",
         "Browse to Amazon and look for shoes",
         
-        // ── SEARCH IN APP (app-specific searches) ────────────────────
-        "Search in Gmail for emails from John",
-        "Search my Gmail for all emails from 2018",
-        "Search Gmail for receipts",
-        "Search in my Gmail account for invoices",
-        "Do a search at my Gmail account for all emails 2018",
-        "Search my email for messages from boss",
-        "Find emails in Gmail about project",
-        "Look in Gmail for unread messages",
-        "Search Outlook for calendar invites",
-        "Search my Outlook for meeting requests",
+        // ── SEARCH IN APP (app-specific searches - NON-EMAIL) ────────────────────
+        // NOTE: Gmail/Outlook email searches moved to dedicated section below with "I need you to" patterns
         "Search in Slack for messages from Sarah",
         "Search Slack for #general channel",
         "Find messages in Slack about deployment",
@@ -2481,10 +2583,8 @@ class DistilBertIntentParser {
         "Goto Netflix and watch a movie",
         "Go to Spotify and search for jazz music",
         
-        // App searches (in-app automation)
-        "Search in Gmail for emails from John",
-        "Search my Gmail for all emails from 2018",
-        "Do a search at my Gmail account for all emails 2018",
+        // App searches (in-app automation - NON-EMAIL)
+        // NOTE: Gmail searches consolidated in dedicated section with "I need you to" patterns
         "Search in Slack for messages from Sarah",
         "Find messages in Slack about deployment",
         "Search in Notion for project notes",
@@ -2524,6 +2624,32 @@ class DistilBertIntentParser {
         "Open Settings and check updates",
         "Open System Preferences and adjust display",
         "Open System Preferences and change sound",
+        
+        // ── GOTO APP + TYPE + QUIT (critical patterns to distinguish from web_search) ────
+        "Goto slack and type hello world then quit the app",
+        "Go to slack and type hello world then quit the app",
+        "Goto Slack and type a message then close it",
+        "Go to Slack and type something then quit",
+        "Goto TextEdit and type hello world then quit",
+        "Go to TextEdit and type something then close",
+        "Goto Notes and type a note then quit the app",
+        "Go to Notes and type something then close it",
+        "Goto Messages and type a text then quit",
+        "Go to Messages and type something then close",
+        "Goto Mail and type an email then quit",
+        "Go to Mail and compose a message then close",
+        "Goto Discord and type a message then quit the app",
+        "Go to Discord and send a message then close it",
+        "Goto Terminal and type a command then quit",
+        "Go to Terminal and run a command then close",
+        "Open Slack type hello world and quit",
+        "Open TextEdit type something and close",
+        "Open Notes type a note and quit the app",
+        "Open Messages type a text and close it",
+        "Launch Slack type a message then quit",
+        "Launch TextEdit type hello world then close",
+        "Start Slack type something and quit the app",
+        "Start TextEdit type a note and close it",
         
         // ── CRITICAL: Action verbs - DO something (command_automate) ────────────
         // These explicitly ask the AI to PERFORM an action, not just provide info
@@ -2903,7 +3029,49 @@ class DistilBertIntentParser {
         "I need you to whitelist this domain",
         "I need you to configure the firewall",
         "I need you to enable the VPN",
-        "I need you to disconnect from the network"
+        "I need you to disconnect from the network",
+        
+        // ── Gmail/Email automation with search and conditional logic ────────────────────────
+        "I need you to goto my gmail account. I should be login in already and do a search for all emails cakers5559@gmail.com. If the profile selection comes up select Lou",
+        "I need you to goto my gmail account and search for emails from john@example.com",
+        "I need you to go to gmail and do a search for all emails from 2023",
+        "I need you to open gmail and search for emails with subject line invoice",
+        "I need you to navigate to gmail and find all unread emails",
+        "I need you to go to my email and search for messages from my boss",
+        "I need you to open outlook and search for calendar invites",
+        "I need you to goto gmail and search for all emails with attachments",
+        "I need you to go to my inbox and search for receipts",
+        "I need you to open gmail and find emails from last week",
+        "I need you to navigate to gmail and search for starred emails",
+        "I need you to go to gmail and do a search for emails containing project",
+        "I need you to open my email and search for messages from sarah",
+        "I need you to goto outlook and search for meeting requests",
+        "I need you to go to gmail and find all emails from a specific sender",
+        "I need you to open gmail and search for emails in the promotions tab",
+        "I need you to navigate to gmail and search for archived emails",
+        "I need you to go to my email account and search for drafts",
+        "I need you to open gmail and find emails with label important",
+        "I need you to goto gmail and search for emails from this month",
+        "Goto my gmail account and search for all emails from mike@company.com",
+        "Go to gmail and do a search for emails about the project",
+        "Open gmail and search for all messages from last year",
+        "Navigate to my email and find emails with attachments",
+        "Go to my gmail and search for unread messages",
+        "Open my email account and search for emails from the team",
+        "Goto gmail and find all emails with receipts",
+        "Go to my inbox and search for important emails",
+        "Open gmail and do a search for emails from my manager",
+        "Navigate to gmail and search for emails about meetings",
+        "Go to my email and find messages from support",
+        "Open my gmail account and search for invoices",
+        "Goto my email and search for emails from clients",
+        "Go to gmail and find all spam emails",
+        "Open my inbox and search for newsletters",
+        "Navigate to my email account and search for confirmations",
+        "Go to gmail and do a search for travel emails",
+        "Open my email and find messages about the deadline",
+        "Goto gmail and search for emails with PDFs",
+        "Go to my gmail account and find archived messages"
       ],
       
       screen_intelligence: [
@@ -4408,7 +4576,16 @@ class DistilBertIntentParser {
     // 🎯 CRITICAL RULES ONLY - Let the model learn most patterns from seed examples
     // ═══════════════════════════════════════════════════════════════════════════
     
-    // 1️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
+    // 1️⃣ "I NEED YOU TO" + ACTION VERBS - Strong signal for command_automate
+    const hasINeedYouTo = lowerMessage.match(/^i need you to\b/i);
+    const hasAutomationActionVerb = lowerMessage.match(/\b(open|launch|start|close|click|type|paste|copy|create|delete|move|navigate|goto|go to|find|search|select|drag|drop|scroll|press|enter)\b/);
+    if (hasINeedYouTo && hasAutomationActionVerb) {
+      scores.command_automate *= 2.5;
+      scores.screen_intelligence *= 0.3;
+      console.log('🎯 [DISTILBERT] "I need you to" + action verb detected - boosting command_automate');
+    }
+    
+    // 2️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
     // BUT: Don't boost if there's a clear action verb (lock, record, capture, etc.)
     const hasActionVerb = lowerMessage.match(/^(lock|unlock|record|capture|screenshot|snap|start recording|begin recording|stop recording)/i);
     const hasExplicitScreenReference = lowerMessage.match(/\b(on (my|the) screen|on screen|my screen|the screen|what'?s on|visible on)\b/);
@@ -4418,7 +4595,7 @@ class DistilBertIntentParser {
       console.log('🎯 [DISTILBERT] Explicit screen reference detected - boosting screen_intelligence');
     }
     
-    // 2️⃣ "HOW TO" QUESTIONS - Always informational, never commands
+    // 3️⃣ "HOW TO" QUESTIONS - Always informational, never commands
     const isHowToQuestion = lowerMessage.match(/^how (to|do i|can i|should i)/i);
     if (isHowToQuestion) {
       scores.web_search *= 2.0;
@@ -4426,7 +4603,7 @@ class DistilBertIntentParser {
       console.log('🔍 [DISTILBERT] "How to" question detected - boosting web_search, penalizing command');
     }
     
-    // 3️⃣ HIGHLIGHTED TEXT OVERRIDE - When text is already selected, skip screen analysis
+    // 4️⃣ HIGHLIGHTED TEXT OVERRIDE - When text is already selected, skip screen analysis
     const hasHighlightedText = message.includes('[Selected text') || 
                               message.includes('[selected text') ||
                               message.includes('Selected text from') ||
@@ -4439,7 +4616,7 @@ class DistilBertIntentParser {
       console.log('🎯 [DISTILBERT] Highlighted text detected - disabling screen_intelligence');
     }
     
-    // 4️⃣ MEMORY STORAGE VS RETRIEVAL - Distinguish between storing and retrieving
+    // 5️⃣ MEMORY STORAGE VS RETRIEVAL - Distinguish between storing and retrieving
     const hasRetrievalQuestion = lowerMessage.match(/^(do you remember|can you recall|what did i|what do you know|when is|when did|what was|where is|where did|which|who did|have i)\b/i);
     const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|remind me)\b/);
     const hasQuestionMark = message.trim().endsWith('?');
@@ -4454,7 +4631,7 @@ class DistilBertIntentParser {
       scores.memory_store *= 0.3;  // Questions are rarely storage requests
     }
     
-    // 5️⃣ TIME-SENSITIVE WEB QUERIES - Boost for current events
+    // 6️⃣ TIME-SENSITIVE WEB QUERIES - Boost for current events
     const hasCurrentEventIndicators = lowerMessage.match(/\b(current|now|today|latest|recent|this year|2024|2025|2026)\b/);
     const hasWeatherQuery = lowerMessage.match(/\b(weather|temperature|forecast)\b/);
     const hasPriceQuery = lowerMessage.match(/\b(price|cost|stock|worth)\b/);
