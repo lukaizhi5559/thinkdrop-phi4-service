@@ -8,6 +8,8 @@ const intentParsingService = require('../services/intentParsing');
 const { validateIntentParseRequest } = require('../middleware/validation');
 
 router.post('/intent.parse', validateIntentParseRequest, async (req, res, next) => {
+  const startTime = Date.now();
+  
   try {
     const { message, context, options } = req.body.payload;
     
@@ -27,6 +29,9 @@ router.post('/intent.parse', validateIntentParseRequest, async (req, res, next) 
     // Parse intent
     const result = await intentParsingService.parseIntent(message, parsingOptions);
     
+    const elapsedMs = Date.now() - startTime;
+    console.log(`Intent parsed in ${elapsedMs}ms:`, result.intent);
+    
     res.json({
       version: 'mcp.v1',
       service: 'phi4',
@@ -36,10 +41,12 @@ router.post('/intent.parse', validateIntentParseRequest, async (req, res, next) 
       data: result,
       error: null,
       metrics: {
-        elapsedMs: Date.now() - req.startTime
+        elapsedMs
       }
     });
   } catch (error) {
+    const elapsedMs = Date.now() - startTime;
+    console.error(`Intent parse failed after ${elapsedMs}ms:`, error.message);
     next(error);
   }
 });

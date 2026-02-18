@@ -16,31 +16,18 @@ const rateLimit = require('express-rate-limit');
 // Middleware
 const { validateApiKey } = require('./middleware/auth');
 const { validateMCPRequest } = require('./middleware/validation');
-const { metricsMiddleware } = require('./middleware/metrics');
 const { errorHandler } = require('./middleware/errorHandler');
 
 // Routes
 const healthRoutes = require('./routes/health');
 const intentRoutes = require('./routes/intent');
-const generalRoutes = require('./routes/general');
-const entityRoutes = require('./routes/entity');
-const embeddingRoutes = require('./routes/embedding');
-const parserRoutes = require('./routes/parser');
-const knowledgeRoutes = require('./routes/knowledge.cjs');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
-const llmService = require('./services/llm');
-const modelSelector = require('./utils/model-selector');
-const ollamaManager = require('./utils/ollama-manager');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 const HOST = process.env.HOST || '0.0.0.0';
-
-// Smart model selection on startup
-const modelSelection = modelSelector.selectBestModel(process.env.OLLAMA_MODEL);
-process.env.OLLAMA_MODEL = modelSelection.model; // Override with selected model
 
 // Security middleware
 app.use(helmet());
@@ -85,19 +72,11 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Metrics middleware
-app.use(metricsMiddleware);
-
 // Health check routes (no auth required)
 app.use('/', healthRoutes);
 
 // API routes (require auth and MCP validation)
 app.use('/', validateApiKey, validateMCPRequest, intentRoutes);
-app.use('/', validateApiKey, validateMCPRequest, generalRoutes);
-app.use('/', validateApiKey, validateMCPRequest, entityRoutes);
-app.use('/', validateApiKey, validateMCPRequest, embeddingRoutes);
-app.use('/', validateApiKey, validateMCPRequest, parserRoutes);
-app.use('/', validateApiKey, validateMCPRequest, knowledgeRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
@@ -105,42 +84,26 @@ app.use(errorHandler);
 // Initialize and start server
 async function startServer() {
   try {
-    console.log('🚀 Starting Phi4 MCP Service...');
+    console.log('🚀 Starting Intent Parsing MCP Service...');
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Port: ${PORT}`);
     console.log(`   Host: ${HOST}`);
-    console.log(`   🤖 Model: ${modelSelection.model} (${modelSelection.reason})`);
-    
-    // Ensure Ollama is running
-    const ollamaReady = await ollamaManager.ensureRunning();
-    if (!ollamaReady) {
-      console.error('❌ Failed to start Ollama. Please start it manually: ollama serve');
-      console.error('   The service will start but LLM features will not work.');
-    }
-    
-    // Warm up LLM (always enabled for better UX)
-    await llmService.initialize();
     
     // Warm up parsers if enabled
     if (process.env.MODEL_WARMUP_ON_START === 'true') {
-      console.log('🔥 Warming up parsers...');
+      console.log('🔥 Warming up DistilBERT parser...');
       await intentParsingService.warmup();
     }
     
     // Start server
     app.listen(PORT, HOST, () => {
-      console.log('✅ Phi4 MCP Service is running');
+      console.log('✅ Intent Parsing MCP Service is running');
       console.log(`   URL: http://${HOST}:${PORT}`);
       console.log(`   Health: http://${HOST}:${PORT}/service.health`);
       console.log(`   Capabilities: http://${HOST}:${PORT}/service.capabilities`);
       console.log('');
       console.log('📊 Available Actions:');
       console.log('   - POST /intent.parse');
-      console.log('   - POST /general.answer');
-      console.log('   - POST /knowledge.answer');
-      console.log('   - POST /entity.extract');
-      console.log('   - POST /embedding.generate');
-      console.log('   - POST /parser.list');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

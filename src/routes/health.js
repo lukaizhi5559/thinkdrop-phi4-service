@@ -4,13 +4,14 @@
 
 const express = require('express');
 const router = express.Router();
-const { metricsCollector } = require('../middleware/metrics');
 const intentParsingService = require('../services/intentParsing');
+
+const startTime = Date.now();
 
 router.get('/service.health', async (req, res) => {
   try {
     const parsers = await intentParsingService.listParsers();
-    const metrics = metricsCollector.getMetrics();
+    const uptime = Math.floor((Date.now() - startTime) / 1000);
     
     const parserStatus = {};
     parsers.forEach(p => {
@@ -18,26 +19,15 @@ router.get('/service.health', async (req, res) => {
     });
     
     res.json({
-      service: 'phi4',
+      service: 'intent-parsing',
       version: '1.0.0',
       status: 'up',
-      uptime: metrics.uptime,
-      parsers: parserStatus,
-      models: {
-        embedding: 'loaded',
-        ner: 'loaded',
-        phi4: 'placeholder'
-      },
-      metrics: {
-        totalRequests: metrics.totalRequests,
-        errorRate: metrics.errorRate,
-        avgResponseTime: metrics.avgResponseTime,
-        parserUsage: metrics.requestsByParser
-      }
+      uptime,
+      parsers: parserStatus
     });
   } catch (error) {
     res.status(503).json({
-      service: 'phi4',
+      service: 'intent-parsing',
       version: '1.0.0',
       status: 'degraded',
       error: error.message
@@ -47,66 +37,29 @@ router.get('/service.health', async (req, res) => {
 
 router.get('/service.capabilities', (req, res) => {
   res.json({
-    service: 'phi4',
+    service: 'intent-parsing',
     version: '1.0.0',
     capabilities: {
       actions: [
         {
           name: 'intent.parse',
-          description: 'Parse user message and classify intent',
+          description: 'Parse user message and classify intent using DistilBERT',
           inputSchema: {
             message: 'string (required)',
             context: 'object (optional)',
             options: 'object (optional)'
           }
-        },
-        {
-          name: 'general.answer',
-          description: 'Generate answer for general knowledge questions',
-          inputSchema: {
-            query: 'string (required)',
-            context: 'object (optional)',
-            options: 'object (optional)'
-          }
-        },
-        {
-          name: 'entity.extract',
-          description: 'Extract entities from text using NER',
-          inputSchema: {
-            text: 'string (required)',
-            entityTypes: 'array (optional)',
-            options: 'object (optional)'
-          }
-        },
-        {
-          name: 'embedding.generate',
-          description: 'Generate text embeddings',
-          inputSchema: {
-            text: 'string (required)',
-            model: 'string (optional)',
-            options: 'object (optional)'
-          }
-        },
-        {
-          name: 'parser.list',
-          description: 'List available parsers',
-          inputSchema: {}
         }
       ],
       features: [
         'intent-classification',
-        'entity-extraction',
-        'general-qa',
-        'embeddings',
-        'multi-parser',
         'confidence-scoring',
-        'suggested-responses'
+        'suggested-responses',
+        'entity-extraction'
       ],
-      parsers: ['distilbert', 'hybrid', 'fast', 'original'],
+      parsers: ['distilbert'],
       models: {
-        embedding: process.env.EMBEDDING_MODEL || 'Xenova/all-MiniLM-L6-v2',
-        ner: process.env.NER_MODEL || 'Xenova/bert-base-multilingual-cased-ner-hrl',
-        llm: 'phi-4'
+        distilbert: 'Xenova/distilbert-base-uncased'
       }
     }
   });
