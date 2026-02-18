@@ -88,13 +88,13 @@ const validateIntentParseRequest = (req, res, next) => {
     });
   }
   
-  if (payload.message.length > 10000) {
+  if (payload.message.length > 50000) {
     return res.status(400).json({
       version: 'mcp.v1',
       status: 'error',
       error: {
         code: 'INVALID_REQUEST',
-        message: 'Message exceeds maximum length of 10000 characters',
+        message: 'Message exceeds maximum length of 50000 characters',
         retryable: false
       }
     });
