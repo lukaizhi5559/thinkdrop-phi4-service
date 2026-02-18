@@ -108,113 +108,6 @@ const memoryRetrieveResponses = [
     "That should be in your archive — checking."
 ];
 
-const commandResponses = [
-    "I'll execute that command.",
-    "Running that for you.",
-    "Processing your request.",
-    "Done. What's next?",
-    "Working on it.",
-    "Command received and underway.",
-    "Executing now.",
-    "Got it — performing the action.",
-    "Understood — doing it now.",
-    "On it.",
-    "Initiating that command.",
-    "Let me take care of that.",
-    "Setting that up.",
-    "Your request is in motion.",
-    "Launching the task.",
-    "Starting the action now.",
-    "Kicking that off.",
-    "Moving forward with your command.",
-    "It’s happening now.",
-    "I’ll take care of it right away.",
-    "Got your request — executing now.",
-    "Just a sec — doing that now.",
-    "Beginning the operation.",
-    "Making that happen.",
-    "I'll start that up.",
-    "Command confirmed.",
-    "Right away — I'm on it.",
-    "Processing as requested.",
-    "I'll handle that immediately.",
-    "Activating the action.",
-    "You got it — starting now.",
-    "Acknowledged — doing it.",
-    "Deploying the command.",
-    "Executing your task now.",
-    "I’ve queued that up.",
-    "That’s in progress.",
-    "It’s rolling.",
-    "Performing the task now.",
-    "Give me a moment — doing it now.",
-    "I’ve started that.",
-    "Task received — initiating.",
-    "I’ll take care of that command.",
-    "Got it — running now.",
-    "I’ll get it done.",
-    "Happening now.",
-    "That’s being handled.",
-    "I’ll perform that action.",
-    "I’m working on your request.",
-    "Action underway.",
-    "Handling it right now."
-];
-
-const questionResponses = [
-    "I can help you find that information.",
-    "Let me look that up for you.",
-    "I'll help you with that question.",
-    "Give me a moment to check on that.",
-    "Let me investigate that for you.",
-    "That’s a good question — let me check.",
-    "Looking into it right now.",
-    "Give me a sec to find the answer.",
-    "I’ll get the information you need.",
-    "Let’s explore that together.",
-    "I’ll look it up for you.",
-    "Checking the details on that.",
-    "Let me gather that info for you.",
-    "Finding the best answer for you.",
-    "I’ll pull that data right now.",
-    "Give me a moment — I’m checking.",
-    "I’m on it — let’s find the answer.",
-    "One sec while I look into that.",
-    "Researching that for you.",
-    "That’s a great question — I’ll handle it.",
-    "Let’s figure that out.",
-    "Digging into that now.",
-    "Let me see what I can find.",
-    "I’ve got you — just a moment.",
-    "You got it — I’m searching now.",
-    "Let’s find that together.",
-    "Hold on — I’ll get that for you.",
-    "I’m working on your question.",
-    "Checking into that for you now.",
-    "I’ll do my best to answer that.",
-    "Searching my resources for that answer.",
-    "Finding out for you.",
-    "One moment — I’ll look into it.",
-    "I’ll try to answer that thoroughly.",
-    "Let me fetch the details.",
-    "Accessing what I know about that.",
-    "Pulling up the information now.",
-    "Let me locate that answer for you.",
-    "I’ll respond with what I know.",
-    "Just a sec — pulling info.",
-    "Hold tight — I’m getting the answer.",
-    "Allow me to explain.",
-    "Here's what I know about that.",
-    "Let me help clarify that for you.",
-    "Let me walk you through the answer.",
-    "I'll analyze that for you.",
-    "I’ll share what I can on that.",
-    "I’m compiling the facts now.",
-    "I’ll give you a concise explanation.",
-    "Hang on — let’s solve that together.",
-    "Let me provide a detailed answer."
-];
-
 const webSearchResponses = [
     "Searching the web for you...",
     "Looking that up online...",
@@ -322,9 +215,6 @@ const IntentResponses = {
       case 'command':
         return this._getCommandResponse(message, entities);
 
-      case 'question':
-        return this._getQuestionResponse(message, entities);
-
       case 'greeting':
         return this._getGreetingResponse(message);
 
@@ -373,26 +263,6 @@ const IntentResponses = {
     return "Executing command...";
   },
 
-  _getQuestionResponse(message, _entities) {
-    const lowerMessage = message.toLowerCase();
-
-    if (lowerMessage.startsWith('what')) {
-      return "Let me explain that for you...";
-    } else if (lowerMessage.startsWith('how')) {
-      return "Here's how that works...";
-    } else if (lowerMessage.startsWith('why')) {
-      return "The reason is...";
-    } else if (lowerMessage.startsWith('when')) {
-      return "Let me check the timing...";
-    } else if (lowerMessage.startsWith('where')) {
-      return "Let me find that location...";
-    } else if (lowerMessage.startsWith('who')) {
-      return "Let me tell you about that...";
-    }
-
-    return "Let me answer that for you...";
-  },
-
   _getGreetingResponse(_message) {
     // Use random greeting response for variety
     const randomIndex = Math.floor(Math.random() * greetingResponses.length);
@@ -434,7 +304,7 @@ const IntentResponses = {
    * @param {Object} state - Current state
    * @returns {string} Progress message
    */
-  getNodeProgressMessage(nodeName, state = {}) {
+  getNodeProgressMessage(nodeName, _state = {}) {
     const nodeMessages = {
       parseIntent: "Understanding your request...",
       webSearch: "Searching the web...",
