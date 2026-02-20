@@ -21,6 +21,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 // Routes
 const healthRoutes = require('./routes/health');
 const intentRoutes = require('./routes/intent');
+const llmRoutes = require('./routes/llm');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
@@ -78,6 +79,10 @@ app.use('/', healthRoutes);
 // API routes (require auth and MCP validation)
 app.use('/', validateApiKey, validateMCPRequest, intentRoutes);
 
+// LLM generation routes (general.answer, general.answer.stream, entity.extract)
+// These use validateMCPRequest but bypass the strict intent-parse validation
+app.use('/', validateApiKey, validateMCPRequest, llmRoutes);
+
 // Error handler (must be last)
 app.use(errorHandler);
 
@@ -104,6 +109,10 @@ async function startServer() {
       console.log('');
       console.log('📊 Available Actions:');
       console.log('   - POST /intent.parse');
+      console.log('   - POST /general.answer');
+      console.log('   - POST /general.answer.stream');
+      console.log('   - POST /entity.extract');
+      console.log('   - POST /embedding.generate');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
