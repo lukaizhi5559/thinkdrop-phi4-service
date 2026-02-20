@@ -627,7 +627,51 @@ class DistilBertIntentParser {
         "What's my favorite food",
         "What is my favorite color",
         "What's my preferred temperature",
-        "What are my favorite movies"
+        "What are my favorite movies",
+
+        // ── Personal usage history (today/this week) ────────────────────────
+        "What apps did I use today",
+        "What apps have I used today",
+        "What apps did I open today",
+        "What apps did I use this week",
+        "What sites did I visit today",
+        "What websites did I browse today",
+        "What did I work on today",
+        "What did I do today",
+        "What have I been doing today",
+        "What did I look at today",
+        "What did I open today",
+        "What programs did I use today",
+        "What tools did I use today",
+        "What did I use this morning",
+        "What have I worked on this week",
+        "What tasks did I complete today",
+        "What did I accomplish today",
+        "What did I do this morning",
+        "What have I done so far today",
+        "What did I spend time on today",
+
+        // ── Conversation history retrieval ────────────────────────
+        "What have we chatted about today",
+        "What have we talked about today",
+        "What did we discuss today",
+        "What have we been talking about",
+        "What did we chat about earlier",
+        "What topics have we covered today",
+        "What have we gone over today",
+        "What did we go over today",
+        "What have we discussed so far",
+        "What did we talk about this session",
+        "What was our conversation about",
+        "What have we been discussing",
+        "What did we cover in our chat",
+        "What topics did we discuss today",
+        "Summarize what we talked about today",
+        "What did we talk about just now",
+        "What were we chatting about",
+        "What have we said to each other today",
+        "What did we go through today",
+        "Recap our conversation today"
       ],
 
       web_search: [
@@ -4853,9 +4897,11 @@ class DistilBertIntentParser {
     }
     
     // 5️⃣ MEMORY STORAGE VS RETRIEVAL - Distinguish between storing and retrieving
-    const hasRetrievalQuestion = lowerMessage.match(/^(do you remember|can you recall|what did i|what do you know|when is|when did|what was|where is|where did|which|who did|have i)\b/i);
+    const hasRetrievalQuestion = lowerMessage.match(/^(do you remember|can you recall|what did i|what do you know|when is|when did|what was|where is|where did|which|who did|have i|was i|did i|am i|have i|around|what about)\b/i);
     const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|remind me)\b/);
     const hasQuestionMark = message.trim().endsWith('?');
+    // Time-ago patterns: "1 minute ago", "15 mins ago", "an hour ago", "2 hours ago", "X to Yam"
+    const hasTimeAgoPattern = lowerMessage.match(/\b(\d+\s*(minute|min|hour|hr)s?\s*ago|an?\s+hour\s+ago|a\s+few\s+(minutes?|hours?)\s+ago|\d+\s*to\s*\d+(am|pm)|around\s+\d)/);
     
     if (hasRetrievalQuestion) {
       scores.memory_retrieve *= 2.0;
@@ -4865,6 +4911,14 @@ class DistilBertIntentParser {
       scores.memory_store *= 1.3;
     } else if (hasQuestionMark && !hasStorageVerb) {
       scores.memory_store *= 0.3;  // Questions are rarely storage requests
+    }
+    
+    // Time-ago pattern always means memory retrieval ("1 min ago", "an hour ago", "6 to 9am")
+    if (hasTimeAgoPattern) {
+      scores.memory_retrieve *= 2.5;
+      scores.memory_store *= 0.1;
+      scores.screen_intelligence *= 0.5;
+      console.log('⏱️ [DISTILBERT] Time-ago pattern detected - boosting memory_retrieve');
     }
     
     // 6️⃣ NAVIGATION COMMANDS - Strong boost for goto/open/navigate patterns
@@ -4887,13 +4941,38 @@ class DistilBertIntentParser {
     const hasCurrentEventIndicators = lowerMessage.match(/\b(current|now|today|latest|recent|this year|2024|2025|2026)\b/);
     const hasWeatherQuery = lowerMessage.match(/\b(weather|temperature|forecast)\b/);
     const hasPriceQuery = lowerMessage.match(/\b(price|cost|stock|worth)\b/);
+    // Personal pronoun signals a personal history query, NOT a current-events web search
+    const hasPersonalPronoun = lowerMessage.match(/\b(i|my|me|we|our|i've|i'm|i was|i did|i worked|i used)\b/);
     
-    if (hasCurrentEventIndicators || hasWeatherQuery || hasPriceQuery) {
+    if ((hasCurrentEventIndicators || hasWeatherQuery || hasPriceQuery) && !hasPersonalPronoun) {
       scores.web_search *= 1.5;
     }
     
+    // Personal pronoun + time word = personal history → boost memory_retrieve
+    if (hasPersonalPronoun && hasCurrentEventIndicators) {
+      scores.memory_retrieve *= 2.0;
+      scores.web_search *= 0.5;
+      console.log('🧠 [DISTILBERT] Personal+time query detected - boosting memory_retrieve, penalizing web_search');
+    }
+    
+    // Personal pronoun + time-ago pattern (e.g. "was I online around 6am", "around 6 to 9am was I")
+    if (hasPersonalPronoun && hasTimeAgoPattern) {
+      scores.memory_retrieve *= 2.0;
+      scores.memory_store *= 0.1;
+      console.log('🧠 [DISTILBERT] Personal+time-ago pattern - boosting memory_retrieve, penalizing memory_store');
+    }
+    
+    // 8️⃣ GENERAL KNOWLEDGE FALLBACK - When all scores are very low, prefer general_knowledge over command_automate
+    const maxScoreVal = Math.max(...Object.values(scores));
+    if (maxScoreVal < 0.35) {
+      scores.general_knowledge *= 1.5;
+      scores.command_automate *= 0.4;
+      scores.screen_intelligence *= 0.4;
+      console.log('📚 [DISTILBERT] Low-confidence query - boosting general_knowledge as fallback');
+    }
+    
     // ═══════════════════════════════════════════════════════════════════════════
-    // 📊 NORMALIZATION - Keep scores in 0-1 range
+    // 📊 NORMALIZATION - Keep scores in 0-1 range (recompute after all boosts)
     // ═══════════════════════════════════════════════════════════════════════════
     const maxScore = Math.max(...Object.values(scores));
     if (maxScore > 1) {

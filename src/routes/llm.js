@@ -77,11 +77,83 @@ async function isOllamaAvailable() {
 }
 
 /**
+ * Format a single memory (screen capture) into clean readable text for the LLM.
+ * Extracts appName, windowTitle, url, and files from metadata.
+ */
+function formatMemory(mem, index) {
+  const meta = (typeof mem.metadata === 'string' ? JSON.parse(mem.metadata || '{}') : mem.metadata) || {};
+  const app = meta.appName || 'Unknown App';
+  const title = meta.windowTitle || '';
+  const url = meta.url || '';
+  const files = Array.isArray(meta.files) && meta.files.length > 0
+    ? meta.files.slice(0, 5).join(', ')
+    : '';
+  const capturedAt = meta.capturedAt
+    ? new Date(meta.capturedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  let line = `[${index + 1}] App: ${app}`;
+  if (title) line += ` | Window: ${title}`;
+  if (url) line += ` | URL: ${url}`;
+  if (files) line += ` | Files: ${files}`;
+  if (capturedAt) line += ` | At: ${capturedAt}`;
+  return line;
+}
+
+/**
+ * Build a structured context block from memories and web results to inject into the system prompt.
+ */
+function buildContextBlock(context) {
+  if (!context) return '';
+
+  const parts = [];
+
+  const memories = context.memories || [];
+  if (memories.length > 0) {
+    parts.push('--- Screen Activity (from memory) ---');
+    memories.forEach((mem, i) => {
+      try {
+        parts.push(formatMemory(mem, i));
+      } catch {
+        parts.push(`[${i + 1}] ${String(mem.text || '').substring(0, 120)}`);
+      }
+    });
+  }
+
+  const webResults = context.webSearchResults || [];
+  if (webResults.length > 0) {
+    parts.push('--- Web Search Results ---');
+    webResults.forEach((r, i) => {
+      const title = r.title || r.name || '';
+      const snippet = r.snippet || r.description || r.text || '';
+      const url = r.url || r.link || '';
+      let line = `[${i + 1}]`;
+      if (title) line += ` ${title}`;
+      if (url) line += ` (${url})`;
+      if (snippet) line += `\n    ${String(snippet).substring(0, 300)}`;
+      parts.push(line);
+    });
+  }
+
+  const convHistory = context.conversationHistory || [];
+  if (convHistory.length > 0) {
+    parts.push('--- Recent Conversation ---');
+    convHistory.slice(-6).forEach(turn => {
+      const role = turn.role === 'assistant' ? 'Assistant' : 'User';
+      parts.push(`${role}: ${String(turn.content || '').substring(0, 300)}`);
+    });
+  }
+
+  return parts.length > 0 ? '\n\n' + parts.join('\n') : '';
+}
+
+/**
  * Build a system prompt for general Q&A
  */
-function buildSystemPrompt(systemInstruction) {
-  return systemInstruction ||
+function buildSystemPrompt(systemInstruction, context) {
+  const base = systemInstruction ||
     'You are ThinkDrop AI, a helpful assistant. Answer clearly and concisely.';
+  return base + buildContextBlock(context);
 }
 
 /**
@@ -130,7 +202,8 @@ router.post('/general.answer', async (req, res) => {
   const {
     query,
     systemInstruction,
-    conversationHistory = []
+    conversationHistory = [],
+    context
   } = payload || {};
 
   if (!query) {
@@ -163,15 +236,19 @@ router.post('/general.answer', async (req, res) => {
 
     const ollama = getOllama();
 
-    // Build messages array
+    // Build messages array — prefer context.systemInstructions (stategraph) over top-level systemInstruction
+    const resolvedInstruction = context?.systemInstructions || systemInstruction;
     const messages = [
-      { role: 'system', content: buildSystemPrompt(systemInstruction) }
+      { role: 'system', content: buildSystemPrompt(resolvedInstruction, context) }
     ];
 
-    // Inject recent conversation history
-    for (const turn of conversationHistory.slice(-10)) {
+    // Inject recent conversation history (skip if already in context block)
+    const historySource = (context?.conversationHistory?.length > 0)
+      ? context.conversationHistory
+      : conversationHistory;
+    for (const turn of historySource.slice(-10)) {
       if (turn.role && turn.content) {
-        messages.push({ role: turn.role === 'ai' ? 'assistant' : turn.role, content: turn.content });
+        messages.push({ role: turn.role === 'ai' ? 'assistant' : turn.role, content: String(turn.content) });
       }
     }
 
@@ -181,7 +258,7 @@ router.post('/general.answer', async (req, res) => {
       model: OLLAMA_MODEL,
       messages,
       stream: false,
-      options: { temperature: 0.7, num_predict: 2048 }
+      options: { temperature: 0.3, num_predict: 2048 }
     });
 
     const answer = response.message?.content || '';
@@ -222,7 +299,8 @@ router.post('/general.answer.stream', async (req, res) => {
   const {
     query,
     systemInstruction,
-    conversationHistory = []
+    conversationHistory = [],
+    context
   } = payload || {};
 
   if (!query) {
@@ -253,13 +331,17 @@ router.post('/general.answer.stream', async (req, res) => {
 
     const ollama = getOllama();
 
+    const resolvedInstruction = context?.systemInstructions || systemInstruction;
     const messages = [
-      { role: 'system', content: buildSystemPrompt(systemInstruction) }
+      { role: 'system', content: buildSystemPrompt(resolvedInstruction, context) }
     ];
 
-    for (const turn of conversationHistory.slice(-10)) {
+    const historySource = (context?.conversationHistory?.length > 0)
+      ? context.conversationHistory
+      : conversationHistory;
+    for (const turn of historySource.slice(-10)) {
       if (turn.role && turn.content) {
-        messages.push({ role: turn.role === 'ai' ? 'assistant' : turn.role, content: turn.content });
+        messages.push({ role: turn.role === 'ai' ? 'assistant' : turn.role, content: String(turn.content) });
       }
     }
 
@@ -269,7 +351,7 @@ router.post('/general.answer.stream', async (req, res) => {
       model: OLLAMA_MODEL,
       messages,
       stream: true,
-      options: { temperature: 0.7, num_predict: 2048 }
+      options: { temperature: 0.3, num_predict: 2048 }
     });
 
     let fullAnswer = '';
