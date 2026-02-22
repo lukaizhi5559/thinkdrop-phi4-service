@@ -671,7 +671,55 @@ class DistilBertIntentParser {
         "What were we chatting about",
         "What have we said to each other today",
         "What did we go through today",
-        "Recap our conversation today"
+        "Recap our conversation today",
+
+        // ── Temporal cross-session retrieval (yesterday / last week) ────────────────────────
+        // These were being misclassified as command_automate by DistilBERT
+        "What did we chat about yesterday",
+        "What did we talk about yesterday",
+        "What did we discuss yesterday",
+        "What were we chatting about yesterday",
+        "What topics did we cover yesterday",
+        "Recap our conversation from yesterday",
+        "Summarize what we talked about yesterday",
+        "What did we go over yesterday",
+        "What did we chat about last week",
+        "What did we talk about last week",
+        "What did we discuss last week",
+        "What did we cover last week",
+        "What did we chat about last month",
+        "What did we talk about last night",
+        "What did we discuss last night",
+        "Did we chat about coding yesterday",
+        "Did we talk about history yesterday",
+        "Did we discuss anything important yesterday",
+        "What topics came up yesterday",
+        "What did I ask you yesterday",
+        "What did I say yesterday",
+        "What did I mention yesterday",
+        "What did I tell you last week",
+        "Did I visit any websites yesterday",
+        "What websites did I visit yesterday",
+        "What apps did I use yesterday",
+        "What did I work on yesterday",
+        "What did I do yesterday",
+        "What did I accomplish yesterday",
+        "What files did I mention yesterday",
+        "List all the files I mentioned yesterday",
+        "What files did I work on yesterday",
+        "What code did I write yesterday",
+        "What projects did I work on last week",
+        "What did I spend time on yesterday",
+        "What was I doing yesterday",
+        "What was I working on last week",
+        "Show me what I did yesterday",
+        "Show me what we talked about last week",
+        "Tell me what we discussed yesterday",
+        "Remind me what we talked about yesterday",
+        "Remind me what I did yesterday",
+        "What happened in our chat yesterday",
+        "What was our last conversation about",
+        "What did we cover in our last session"
       ],
 
       web_search: [
@@ -1389,6 +1437,24 @@ class DistilBertIntentParser {
         "Show me how to combine ChatGPT and Klaviyo AI to segment customers with AI",
         "Guide me through using Claude and Attio AI to enrich CRM data with AI",
         
+        // ── "Tell me about / Explain / What is" informational queries ──
+        // These are web_search — asking for information about a topic, NOT commands
+        "Tell me about CrowdStrike and their security products",
+        "Tell me about this company and what they do",
+        "Tell me more about OpenAI and their latest models",
+        "Explain what Kubernetes is and how it works",
+        "Explain the difference between TCP and UDP",
+        "Explain what this technology does",
+        "What is this CrowdStrike thing about",
+        "What is OpenClaw and should I use it",
+        "What are the risks of using this tool",
+        "Describe what React hooks are",
+        "Describe the difference between REST and GraphQL",
+        "Tell me about the latest AI regulations in the EU",
+        "Explain what happened with the CrowdStrike outage",
+        "What is this issue about and how does it affect me",
+        "Tell me about zero-trust security architecture",
+
         // ── IMPORTANT: What is NOT web_search ──────────────────
         // These are command_automate (action commands, not information queries):
         // ❌ "Goto chatgpt find my project called Thinkdrop AI and do a search for how to use Stripe API"
@@ -1830,6 +1896,39 @@ class DistilBertIntentParser {
       ],    
       // command_execute: [
       command_automate: [
+        // ── File search and existence queries ──────────────────
+        // "Do I have X files" = search the filesystem → command_automate (mdfind/find)
+        "Do I have resume files on my computer",
+        "Do I have any PDF files on my desktop",
+        "Do I have any photos in my Downloads folder",
+        "Are there any log files in my home directory",
+        "Do I have a file called config.json anywhere",
+        "Find all resume files on my computer",
+        "Find all PDF files on my desktop",
+        "Search for resume files on my computer",
+        "Search for files named resume on my computer",
+        "List all PDF files in my Documents",
+        "Show me all text files on my desktop",
+        "Find all images in my Downloads folder",
+        "Are there any zip files on my desktop",
+        "Do I have any Word documents in my Documents folder",
+        "Find all JavaScript files in my projects folder",
+        "List all applications installed on my computer",
+        "Show me all apps on my computer",
+        "What applications are installed on my Mac",
+        "List all the applications on my computer",
+        "Show me all installed apps",
+        "Find all .txt files on my desktop",
+        "Search my computer for files named budget",
+        "Do I have any spreadsheet files",
+        "Find all Excel files on my computer",
+        "Are there any Python files in my projects",
+        "List all files on my desktop",
+        "Show me what files are on my desktop",
+        "What files are in my Downloads folder",
+        "List the contents of my Documents folder",
+        "Show me the files in my home directory",
+
         // ── File and folder manipulation ──────────────────
         "Create a file on my desktop called hello.txt",
         "Make a folder on my desktop named projects",
@@ -1908,6 +2007,44 @@ class DistilBertIntentParser {
         "Book a meeting for 3pm",
         "Schedule an appointment for next Tuesday",
         
+        // ── Single-step UI click/type/press actions ──────────────────
+        // Short imperative commands — were scoring as screen_intelligence without these
+        "Click the submit button",
+        "Click the login button",
+        "Click the OK button",
+        "Click the cancel button",
+        "Click the save button",
+        "Click submit",
+        "Click OK",
+        "Click cancel",
+        "Press the submit button",
+        "Press OK",
+        "Press enter",
+        "Tap the send button",
+        "Tap the confirm button",
+        "Click the sign in button",
+        "Click the next button",
+        "Click the back button",
+        "Click the close button",
+        "Click the download button",
+        "Click the upload button",
+        "Click the delete button",
+        "Click the edit button",
+        "Click the add button",
+        "Click the create button",
+        "Click the search button",
+        "Click the apply button",
+        "Type hello in the search box",
+        "Type my name in the input field",
+        "Type the password in the password field",
+        "Enter my email in the email field",
+        "Fill in the form with my details",
+        "Select the first option from the dropdown",
+        "Check the agree to terms checkbox",
+        "Uncheck the newsletter checkbox",
+        "Scroll down the page",
+        "Scroll to the bottom",
+
         // ── Email actions ──────────────────
         "Send an email to John",
         "Send an email to my boss",
@@ -4865,7 +5002,24 @@ class DistilBertIntentParser {
       console.log('🎯 [DISTILBERT] "I need you to" + action verb detected - boosting command_automate');
     }
     
-    // 2️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
+    // 2️⃣ FILE SEARCH / EXISTENCE QUERIES - "do I have X files", "list all apps", "find files"
+    // These are filesystem queries → command_automate (mdfind/find/ls), NOT screen_intelligence
+    const isFileSearchQuery = lowerMessage.match(
+      /\b(do i have|are there|have i got|find all|list all|show me all|search (my computer|for files)|what files|what apps|what applications|applications (on|installed)|apps (on|installed))\b.*\b(files?|folders?|apps?|applications?|documents?|photos?|images?|pdfs?|spreadsheets?|on my (computer|mac|desktop|laptop|machine))\b/i
+    ) || lowerMessage.match(
+      /\b(list|show|find|search for|do i have|are there)\b.*(files?|folders?|apps?|applications?)\b.*(on my|in my|computer|mac|desktop|laptop|downloads|documents|home)/i
+    );
+    if (isFileSearchQuery) {
+      // Hard override — filesystem queries MUST be command_automate regardless of base scores
+      const maxScore = Math.max(...Object.values(scores));
+      scores.command_automate = Math.max(scores.command_automate, maxScore) * 1.5;
+      scores.screen_intelligence = 0.001;
+      scores.memory_retrieve = 0.001;
+      scores.web_search *= 0.1;
+      console.log('🗂️ [DISTILBERT] File search/existence query — hard override to command_automate');
+    }
+
+    // 3️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
     // BUT: Don't boost if there's a clear action verb (lock, record, capture, etc.)
     const hasActionVerb = lowerMessage.match(/^(lock|unlock|record|capture|screenshot|snap|start recording|begin recording|stop recording)/i);
     const hasExplicitScreenReference = lowerMessage.match(/\b(on (my|the) screen|on screen|my screen|the screen|what'?s on|visible on)\b/);
@@ -4900,9 +5054,18 @@ class DistilBertIntentParser {
     const hasRetrievalQuestion = lowerMessage.match(/^(do you remember|can you recall|what did i|what do you know|when is|when did|what was|where is|where did|which|who did|have i|was i|did i|am i|have i|around|what about)\b/i);
     const hasStorageVerb = lowerMessage.match(/\b(remember|save|note|store|keep|don't forget|remind me)\b/);
     const hasQuestionMark = message.trim().endsWith('?');
-    // Time-ago patterns: "1 minute ago", "15 mins ago", "an hour ago", "2 hours ago", "X to Yam"
-    const hasTimeAgoPattern = lowerMessage.match(/\b(\d+\s*(minute|min|hour|hr)s?\s*ago|an?\s+hour\s+ago|a\s+few\s+(minutes?|hours?)\s+ago|\d+\s*to\s*\d+(am|pm)|around\s+\d)/);
+    // Time-ago patterns: "1 minute ago", "15 mins ago", "an hour ago", "last hour", "last 30 mins", "X to Yam"
+    const hasTimeAgoPattern = lowerMessage.match(/\b(\d+\s*(minute|min|hour|hr)s?\s*ago|an?\s+hour\s+ago|a\s+few\s+(minutes?|hours?)\s+ago|\d+\s*to\s*\d+(am|pm)|around\s+\d|last\s+\d+\s*(minute|min|hour|hr)s?|in\s+the\s+last\s+\d+\s*(minute|min|hour|hr)s?|past\s+\d+\s*(minute|min|hour|hr)s?|last\s+(hour|minute|min)|in\s+the\s+last\s+(hour|minute|min))/);
     
+    // "what have I seen/done/visited" — past tense personal activity = memory_retrieve
+    const hasPastTensePersonalActivity = lowerMessage.match(/\b(what have i (seen|done|visited|been|watched|read|looked at|worked on)|what did i (see|do|visit|watch|read|look at|work on))\b/i);
+    if (hasPastTensePersonalActivity) {
+      scores.memory_retrieve *= 2.5;
+      scores.screen_intelligence *= 0.3;
+      scores.memory_store *= 0.1;
+      console.log('🧠 [DISTILBERT] Past-tense personal activity detected - boosting memory_retrieve');
+    }
+
     if (hasRetrievalQuestion) {
       scores.memory_retrieve *= 2.0;
       scores.memory_store *= 0.2;
@@ -4935,6 +5098,16 @@ class DistilBertIntentParser {
         scores.command_automate *= 1.3;
         scores.web_search *= 0.5; // Reduce web_search confidence
       }
+    }
+
+    // 6b️⃣ INFORMATIONAL QUESTIONS - "tell me about", "explain", "what is", "describe"
+    // These are NEVER command_automate — they are web_search or general_knowledge
+    const hasInformationalPattern = lowerMessage.match(/^(tell me (about|more about|what)|explain (to me |me )?(what|how|why|the|this|that)?|what (is|are|was|were) (this|that|the|a|an)\b|describe (this|that|the))/i);
+    if (hasInformationalPattern) {
+      scores.command_automate *= 0.1;
+      scores.web_search *= 1.8;
+      scores.general_knowledge *= 1.5;
+      console.log('📖 [DISTILBERT] Informational question detected - penalizing command_automate, boosting web_search');
     }
     
     // 7️⃣ TIME-SENSITIVE WEB QUERIES - Boost for current events
