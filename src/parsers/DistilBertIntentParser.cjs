@@ -719,7 +719,30 @@ class DistilBertIntentParser {
         "Remind me what I did yesterday",
         "What happened in our chat yesterday",
         "What was our last conversation about",
-        "What did we cover in our last session"
+        "What did we cover in our last session",
+
+        // ── "Give/Tell me" retrieval patterns (hard negatives vs memory_store) ────────────────────────
+        // These were scoring nearly equal to memory_store — adding explicit seeds to break the tie
+        "Give me the date of that day",
+        "Give me the date we discussed",
+        "Give me the exact date",
+        "Give me the time of my appointment",
+        "Give me the details I saved",
+        "Tell me the date of that event",
+        "Tell me what day that was",
+        "Tell me what I saved about that",
+        "Tell me the time of my meeting",
+        "Tell me what I noted down",
+        "Show me the date I mentioned",
+        "Show me what day that was",
+        "Show me the info I stored",
+        "Find the date I mentioned",
+        "Find what I said about that day",
+        "What date was that",
+        "What day was that",
+        "What was the date of that",
+        "What was the exact date",
+        "What was the time again"
       ],
 
       web_search: [
@@ -1957,7 +1980,29 @@ class DistilBertIntentParser {
         "Create a new directory called backup in my home",
         "Create a new folder called Projects",
         "Make a new folder named Work",
-        
+
+        // ── File editing and updating ──────────────────
+        "Find the file music-songs and edit it",
+        "Find file music-songs and update it with new chapter and verse",
+        "Edit the file notes.txt and add new content",
+        "Update the file config.txt with new settings",
+        "Open the file report.txt and add a new section",
+        "Find my weekly verse file and update it to Genesis 22",
+        "Edit music-songs and change the chapter",
+        "Update my notes file with new information",
+        "Find the file budget.txt and update the numbers",
+        "Edit the file todo.txt and add new tasks",
+        "Update the readme file with new instructions",
+        "Find and edit the file called schedule.txt",
+        "Append new content to the file journal.txt",
+        "Add a new line to my notes.txt file",
+        "Write new content to the file called plan.txt",
+        "Update the text file with the new chapter and verses",
+        "Find my memory verse file and update it",
+        "Edit the document and replace the old chapter with the new one",
+        "Update the file with Genesis 22 verses for the kids",
+        "Find the weekly memory verse file and change it to the next chapter",
+
         // ── Application launching (NOT screen intelligence) ──────────────────
         "Open Chrome",
         "Close all windows",
@@ -2255,6 +2300,45 @@ class DistilBertIntentParser {
         "Count the files in this directory",
         "How many files are in my home folder",
         
+        // ── Search/fetch + save to file (multi-step: web search → write file) ──────────────────
+        // CRITICAL: These were being misclassified as web_search — they require shell execution to write the file
+        // ~/Desktop/
+        "Search for the top 5 trending GitHub repositories today and save a summary to ~/Desktop/trending-repos.md",
+        "Find the latest news about AI and save it to ~/Desktop/ai-news.txt",
+        "Search for the best React libraries and write the results to ~/Desktop/react-libs.md",
+        "Look up the current Bitcoin price and save it to ~/Desktop/crypto.txt",
+        "Find the top 10 Python packages and save a list to ~/Desktop/python-packages.txt",
+        "Look up the weather forecast for this week and write it to ~/Desktop/weather.txt",
+        "Search for the best VS Code extensions and output a summary to ~/Desktop/vscode-extensions.txt",
+        "Fetch the top Hacker News stories and write them to ~/Desktop/hn-stories.md",
+        "Look up current stock prices for AAPL and save to ~/Desktop/stocks.txt",
+        // ~/Documents/
+        "Search for open source machine learning projects and save results to ~/Documents/ml-projects.md",
+        "Find recent articles about TypeScript and save them to ~/Documents/ts-articles.md",
+        "Look up the latest npm packages for authentication and write to ~/Documents/auth-packages.md",
+        "Search for remote jobs in software engineering and save results to ~/Documents/jobs.md",
+        "Find the top JavaScript frameworks and write a summary to ~/Documents/frameworks.md",
+        "Search for startup funding news and save a summary to ~/Documents/funding.md",
+        "Look up Python best practices and save the notes to ~/Documents/python-notes.txt",
+        "Find documentation for the Stripe API and save it to ~/Documents/stripe-docs.md",
+        // ~/Downloads/
+        "Search for free stock photos and save the links to ~/Downloads/photos.txt",
+        "Find the latest release notes for Node.js and save to ~/Downloads/node-release.md",
+        "Look up open source licenses and write a comparison to ~/Downloads/licenses.md",
+        // /tmp/ and relative paths
+        "Search for the top 5 results for machine learning tutorials and save to /tmp/tutorials.txt",
+        "Find trending repos on GitHub and write to ./trending.md",
+        "Look up the weather and save it to ./weather.txt",
+        // No explicit path — "save to a file", "write to a file on my desktop/documents"
+        "Get the latest GitHub trending repos and save to a file on my desktop",
+        "Find trending repositories on GitHub this week and save a summary to my desktop",
+        "Search for the best coffee shops near me and write results to a file",
+        "Find all open issues in the react repository and save to a file on my desktop",
+        "Search for Python documentation on decorators and save to a text file",
+        "Look up the top 5 AI tools and write them to a markdown file on my desktop",
+        "Find recent tech news and save a summary to a file in my Documents folder",
+        "Search for the best productivity apps and write the list to my Documents",
+
         // ── Network queries (read-only) ──────────────────────────
         "What's my IP address",
         "Show my local IP",
@@ -3653,7 +3737,64 @@ class DistilBertIntentParser {
         "Go to gmail and do a search for travel emails",
         "Open my email and find messages about the deadline",
         "Goto gmail and search for emails with PDFs",
-        "Go to my gmail account and find archived messages"
+        "Go to my gmail account and find archived messages",
+
+        // ── "I need to" (without "you") — real-world task requests ────────────────────────
+        // These were being misclassified as memory_store by DistilBERT
+        "I need to renew my license",
+        "I need to renew my driver's license",
+        "I need to book a flight to New York",
+        "I need to book an appointment with the doctor",
+        "I need to apply for a passport",
+        "I need to register for the conference",
+        "I need to schedule a meeting with the team",
+        "I need to order groceries online",
+        "I need to buy a birthday gift",
+        "I need to sign up for the newsletter",
+        "I need to fill out the tax form",
+        "I need to submit my application",
+        "I need to pay my electric bill online",
+        "I need to check in for my flight",
+        "I need to download the latest version",
+        "I need to install the new update",
+        "I need to update my resume",
+        "I need to create a new account",
+        "I need to reset my password",
+        "I need to cancel my subscription",
+        "I need to track my package",
+        "I need to find a restaurant nearby",
+        "I need to make a reservation at a restaurant",
+        "I need to renew my car registration",
+        "I need to apply for a job",
+
+        // ── "Can you do / help me" — polite action requests ────────────────────────
+        "Can you do this for me",
+        "Can you help me renew my license",
+        "Can you book a flight for me",
+        "Can you search for winter coats on Amazon",
+        "Can you find the cheapest flight to Miami",
+        "Can you apply for this job for me",
+        "Can you fill out this form for me",
+        "Can you order pizza for me",
+        "Can you schedule a dentist appointment",
+        "Can you check if my package has shipped",
+        "Help me renew my license",
+        "Help me book a hotel room",
+        "Help me find a good restaurant",
+        "Help me apply for this scholarship",
+        "Help me sign up for this service",
+        "Help me fill out this application",
+        "Help me order from this website",
+        "Please renew my license",
+        "Please book a flight to Chicago",
+        "Please search for apartments in Austin",
+        "Please apply for this job",
+        "Please schedule this appointment for me",
+        "Do this for me",
+        "Can you do this task for me",
+        "I need help renewing my license",
+        "I need help booking a flight",
+        "I need help applying for this"
       ],
       
       screen_intelligence: [
@@ -4993,13 +5134,15 @@ class DistilBertIntentParser {
     // 🎯 CRITICAL RULES ONLY - Let the model learn most patterns from seed examples
     // ═══════════════════════════════════════════════════════════════════════════
     
-    // 1️⃣ "I NEED YOU TO" + ACTION VERBS - Strong signal for command_automate
-    const hasINeedYouTo = lowerMessage.match(/^i need you to\b/i);
-    const hasAutomationActionVerb = lowerMessage.match(/\b(open|launch|start|close|click|type|paste|copy|create|delete|move|navigate|goto|go to|find|search|select|drag|drop|scroll|press|enter)\b/);
-    if (hasINeedYouTo && hasAutomationActionVerb) {
+    // 1️⃣ "I NEED YOU TO / I NEED TO / HELP ME / CAN YOU" + ACTION VERBS - Strong signal for command_automate
+    const hasINeedTo = lowerMessage.match(/^(i need (you to|you |to )|help me |can you (do|help|go|search|find|book|buy|apply|fill|sign|renew|register|schedule|order|check|navigate|open|create|send|submit)|please (do|go|search|find|book|buy|apply|fill|sign|renew|register|schedule|order|check|navigate|open|create|send|submit))/i);
+    const hasAutomationActionVerb = lowerMessage.match(/\b(open|launch|start|close|click|type|paste|copy|create|delete|move|navigate|goto|go to|find|search|select|drag|drop|scroll|press|enter|edit|update|append|write|rename|modify|renew|book|apply|register|schedule|order|buy|purchase|sign up|fill out|submit|pay|cancel|track|install|download|reset|upgrade|unsubscribe)\b/);
+    if (hasINeedTo && hasAutomationActionVerb) {
       scores.command_automate *= 2.5;
       scores.screen_intelligence *= 0.3;
-      console.log('🎯 [DISTILBERT] "I need you to" + action verb detected - boosting command_automate');
+      scores.memory_retrieve *= 0.2;
+      scores.memory_store *= 0.1;
+      console.log('🎯 [DISTILBERT] "I need to/help me/can you" + action verb detected - boosting command_automate');
     }
     
     // 2️⃣ FILE SEARCH / EXISTENCE QUERIES - "do I have X files", "list all apps", "find files"
@@ -5017,6 +5160,20 @@ class DistilBertIntentParser {
       scores.memory_retrieve = 0.001;
       scores.web_search *= 0.1;
       console.log('🗂️ [DISTILBERT] File search/existence query — hard override to command_automate');
+    }
+
+    // 2b️⃣ FILE EDIT / UPDATE QUERIES - "find file X and edit it", "update the file", "edit file X"
+    const isFileEditQuery = lowerMessage.match(
+      /\b(edit|update|append|modify|change|rewrite|overwrite)\b.{0,40}\b(file|document|txt|rtf|md|json|csv|notes?|verse|chapter)\b/i
+    ) || lowerMessage.match(
+      /\b(find|locate)\b.{0,30}\b(file|document)\b.{0,30}\b(edit|update|change|modify|append)\b/i
+    );
+    if (isFileEditQuery) {
+      const maxScore = Math.max(...Object.values(scores));
+      scores.command_automate = Math.max(scores.command_automate, maxScore) * 1.5;
+      scores.memory_retrieve = 0.001;
+      scores.screen_intelligence = 0.001;
+      console.log('✏️ [DISTILBERT] File edit/update query — hard override to command_automate');
     }
 
     // 3️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
@@ -5064,6 +5221,32 @@ class DistilBertIntentParser {
       scores.screen_intelligence *= 0.3;
       scores.memory_store *= 0.1;
       console.log('🧠 [DISTILBERT] Past-tense personal activity detected - boosting memory_retrieve');
+    }
+
+    // Past-tense action report — user is TELLING the app what they did → memory_store
+    // "sent a message to X", "sent an email to X", "called X", "messaged X", "told X"
+    // These were being misclassified as web_search
+    const hasPastTenseActionReport = lowerMessage.match(/^(sent (a |an )?(message|email|text|slack|dm|note|reply|response|invite|request)|called |messaged |texted |emailed |told |informed |notified |pinged |dm'd |dmed )/i);
+    if (hasPastTenseActionReport) {
+      scores.memory_store *= 3.0;
+      scores.web_search *= 0.05;
+      scores.command_automate *= 0.1;
+      scores.memory_retrieve *= 0.3;
+      console.log('📝 [DISTILBERT] Past-tense action report detected - boosting memory_store, penalizing web_search');
+    }
+
+    // File-write destination — "save to ~/Desktop/file.md", "write to /tmp/out.txt", etc.
+    // The prompt requires executing a shell command to write the file → command_automate.
+    const hasFileWriteDest = lowerMessage.match(
+      /\b(save|write|output|store|put)\b.{0,80}(to|into|as)\s+(~[/]|[/]|[.][/])[\w/.]+/i  // explicit path: ~/Desktop/file.md, /tmp/out.txt
+      || /\b(save|write|output|store|put)\b.{0,80}(to|into)\s+(a\s+)?(file|txt|text file|markdown file|md file|\.txt|\.md|\.csv|\.json)\b/i  // "save to a file", "write to a txt"
+      || /\b(save|write|output)\b.{0,80}(on|in|to)\s+(my\s+)?(desktop|documents|downloads|home folder|home directory)\b/i  // "save to my desktop/documents"
+    );
+    if (hasFileWriteDest) {
+      scores.command_automate *= 3.0;
+      scores.web_search *= 0.3;
+      scores.memory_store *= 0.2;
+      console.log('💾 [DISTILBERT] File-write destination detected - boosting command_automate, penalizing web_search');
     }
 
     if (hasRetrievalQuestion) {
