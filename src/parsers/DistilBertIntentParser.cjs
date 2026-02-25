@@ -4753,7 +4753,35 @@ class DistilBertIntentParser {
         "Evening, just wanted to check in",
         "checking in",
         "just checking in",
-        "wanted to say hi"
+        "wanted to say hi",
+
+        // ── Identity / persona — questions about the assistant itself ────────
+        "What's your name?",
+        "What is your name?",
+        "Who are you?",
+        "What are you?",
+        "Tell me about yourself",
+        "What can you do?",
+        "What do you do?",
+        "Are you an AI?",
+        "Are you a bot?",
+        "Are you human?",
+        "Do you have a name?",
+        "What should I call you?",
+        "How old are you?",
+        "Where do you come from?",
+        "What is your purpose?",
+        "What is your role?",
+        "Do you think?",
+        "Do you feel anything?",
+        "Do you remember me?",
+        "Do you like music?",
+        "Can you hear me?",
+        "Are you listening?",
+        "Are you there?",
+        "Are you awake?",
+        "Is this working?",
+        "Do you understand me?"
       ]
     };
     
