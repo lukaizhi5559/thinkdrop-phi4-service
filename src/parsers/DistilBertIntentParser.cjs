@@ -1952,6 +1952,49 @@ class DistilBertIntentParser {
         "List the contents of my Documents folder",
         "Show me the files in my home directory",
 
+        // ── Date / time / system info ──────────────────────
+        // These need shell.run (date, system_profiler, etc.) — NOT memory_retrieve or general_knowledge
+        "What's today's date",
+        "What is today's date",
+        "What's the date today",
+        "What day is it today",
+        "What time is it",
+        "What's the current time",
+        "Tell me today's date",
+        "Get today's date",
+        "What is the current date and time",
+        "What's my battery level",
+        "How much battery do I have left",
+        "What's my current wifi network",
+        "What's my IP address",
+        "How much disk space do I have",
+        "What's my disk usage",
+        "What's my Mac's hostname",
+        "What's my username on this machine",
+        "Show me system info",
+        "What OS version am I running",
+        "Check my CPU usage",
+        "How much RAM is being used",
+
+        // ── Codebase / project analysis ────────────────────
+        // Reading/exploring a codebase with fs.read — NOT screen_intelligence
+        "Analyze the application at my Desktop/projects/thinkdrop",
+        "Read the codebase at ~/projects/myapp and tell me what it does",
+        "Explore the project in my projects folder",
+        "Understand the app at ~/Desktop/projects/thinkdrop-aws",
+        "Tell me what this app is all about",
+        "What is this project about",
+        "Give me an overview of this codebase",
+        "Analyze the project thinkdrop-aws in my projects folder",
+        "Read and understand the code at ~/projects/myapi",
+        "Explore the repo at my Desktop",
+        "What does the application in my projects folder do",
+        "Summarize the application at ~/Desktop/projects/myapp",
+        "Examine the project structure at ~/projects/thinkdrop",
+        "Analyze this application and tell me what it's about",
+        "Inspect the codebase at ~/projects/webapp",
+        "Read the project at my Desktop and summarize it",
+
         // ── File and folder manipulation ──────────────────
         "Create a file on my desktop called hello.txt",
         "Make a folder on my desktop named projects",
@@ -5174,6 +5217,24 @@ class DistilBertIntentParser {
       scores.memory_retrieve = 0.001;
       scores.screen_intelligence = 0.001;
       console.log('✏️ [DISTILBERT] File edit/update query — hard override to command_automate');
+    }
+
+    // 2c️⃣ CODEBASE / PROJECT ANALYSIS — "analyze the application at X", "read the codebase",
+    // "explore the project", "tell me what this app does", "what is this repo about"
+    // These are fs.read/command_automate, NOT screen_intelligence.
+    const isCodebaseAnalysis = lowerMessage.match(
+      /\b(analyze|analyse|read|explore|understand|examine|inspect|overview|summarize|what.*(about|is)|tell me.*(about|what))\b.{0,80}\b(app|application|project|repo|repository|codebase|code base|folder|directory)\b/i
+    ) || lowerMessage.match(
+      /\b(analyze|analyse|read|explore|understand|examine|inspect)\b.{0,60}\b(at|in|from|located|on)\b.{0,60}(~\/|\/Users\/|\/home\/|desktop|projects|folder)/i
+    ) || lowerMessage.match(
+      /\b(what('s| is) (this|the) (app|application|project|repo) (all )?about)\b/i
+    );
+    if (isCodebaseAnalysis) {
+      const maxScore = Math.max(...Object.values(scores));
+      scores.command_automate = Math.max(scores.command_automate, maxScore) * 2.0;
+      scores.screen_intelligence = 0.001;
+      scores.memory_retrieve *= 0.1;
+      console.log('📁 [DISTILBERT] Codebase/project analysis query — hard override to command_automate');
     }
 
     // 3️⃣ EXPLICIT SCREEN REFERENCES - Strongest signal for screen_intelligence
