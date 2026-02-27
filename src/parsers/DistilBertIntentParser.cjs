@@ -157,6 +157,55 @@ class DistilBertIntentParser {
         "Record this to memory",
         "Remember this for later",
         
+        // ── Personal-fact declarations — identity and relationship facts ────────────
+        // Standard: "My <role> is <value>"
+        "My name is Sam",
+        "My name is Lukas",
+        "My wife is Sarah",
+        "My husband is James",
+        "My mom is Linda",
+        "My dad is Robert",
+        "My boss is David",
+        "My cousin is Chris",
+        "My dentist is Dr. Patel",
+        "My doctor is Dr. Kim",
+        "My lawyer is Mr. Thompson",
+        "My phone number is +1 555 123 4567",
+        "My email is sam@example.com",
+        "My address is 123 Main Street",
+        "My sister is Amanda",
+        "My brother is Jake",
+        "My son is Tyler",
+        "My daughter is Emma",
+        "My friend is Marcus",
+        "My neighbor is Tom",
+        "My coworker is Priya",
+        "My manager is Lisa",
+        "My trainer is Carlos",
+        // Possessive: "My wife's name is Sarah"
+        "My wife's name is Sarah",
+        "My dad's name is Robert",
+        "My cousin's name is Chris",
+        "My boss's name is David",
+        // With filler prefix: "No my name is Sam", "Actually my name is Lukas"
+        "No my name is Sam",
+        "Actually my name is Lukas",
+        "Wait my wife is Sarah",
+        "Actually my boss is David",
+        "No my cousin is Chris",
+        // Inverted: "Chris Akers is my cousin", "John is my boss"
+        "Chris Akers is my cousin",
+        "John Smith is my boss",
+        "Sarah is my wife",
+        "Dr. Patel is my dentist",
+        "Marcus is my best friend",
+        "Amanda is my sister",
+        "Tom is my neighbor",
+        "Lisa is my manager",
+        // "I am" identity declarations
+        "I am Sam",
+        "I am Lukas",
+
         // ── CRITICAL: Store patterns that were failing tests ────────────────────────
         "From now on, call me Alex",
         "From now on call me John",
@@ -523,6 +572,40 @@ class DistilBertIntentParser {
         "What do you know about my routine",
         "What do you know about my diet",
         
+        // ── Personal attribute retrieval ("what's my X", "who is my X") ──────
+        // These ask ThinkDrop to recall a stored personal fact → memory_retrieve
+        "What's my name",
+        "What is my name",
+        "Whats my name",
+        "What's my phone number",
+        "What is my phone number",
+        "What's my email",
+        "What is my email address",
+        "What's my home address",
+        "What is my home address",
+        "What's my wife's name",
+        "What is my wife's name",
+        "Who is my wife",
+        "Who is my husband",
+        "Who is my partner",
+        "What's my doctor's name",
+        "Who is my dentist",
+        "Who is my boss",
+        "What's my mom's number",
+        "What's my dad's number",
+        "What's my wife's phone number",
+        "What's my cousin's name",
+        "Who is my friend Sarah",
+        "What do you know about my wife",
+        "Tell me about my dentist",
+        "What's the address of my dentist",
+        "Where is my gym",
+        "What's my gym address",
+        "Where do I live",
+        "What's my address",
+        "What's my work address",
+        "Where do I work",
+
         // ── Conversation context retrieval ──────────────
         "What did we talk about earlier?",
         "What was I saying before?",
@@ -5324,6 +5407,24 @@ class DistilBertIntentParser {
       console.log('📝 [DISTILBERT] Past-tense action report detected - boosting memory_store, penalizing web_search');
     }
 
+    // Personal-fact declaration — user is stating an identity/relationship fact → memory_store
+    // "My name is Sam", "My wife is Sarah", "Chris Akers is my cousin", "No my name is Sam"
+    // Standard form: starts with optional filler + "my <role> is <value>"
+    const hasPersonalFactDeclaration = lowerMessage.match(
+      /^(?:(?:no|nope|yes|yeah|actually|well|wait|so|ok|okay|right|anyway|hmm|um|uh|oh|ah),?\s+)?my\s+[\w\s']{1,30}\s+(?:name\s+)?(?:is|are|was)\s+\S/i
+    ) || lowerMessage.match(
+      // Inverted: "Chris Akers is my cousin" — capital name + "is my" + relationship role
+      /^[a-z][\w\s.'-]{1,40}\s+(?:is|are|was)\s+my\s+(?:wife|husband|partner|mom|mother|dad|father|son|daughter|brother|sister|cousin|aunt|uncle|friend|coworker|boss|manager|doctor|dentist|vet|lawyer|trainer|coach|neighbor|roommate)\b/i
+    );
+    if (hasPersonalFactDeclaration) {
+      scores.memory_store *= 3.0;
+      scores.greeting *= 0.1;
+      scores.memory_retrieve *= 0.1;
+      scores.command_automate *= 0.1;
+      scores.general_knowledge *= 0.1;
+      console.log('🪪 [DISTILBERT] Personal-fact declaration detected - boosting memory_store');
+    }
+
     // File-write destination — "save to ~/Desktop/file.md", "write to /tmp/out.txt", etc.
     // The prompt requires executing a shell command to write the file → command_automate.
     const hasFileWriteDest = lowerMessage.match(
@@ -5336,6 +5437,19 @@ class DistilBertIntentParser {
       scores.web_search *= 0.3;
       scores.memory_store *= 0.2;
       console.log('💾 [DISTILBERT] File-write destination detected - boosting command_automate, penalizing web_search');
+    }
+
+    // Personal-attribute retrieval: "what's my name", "who is my wife", "where is my X"
+    // These ask ThinkDrop to recall a stored personal fact → strong memory_retrieve boost
+    const hasPersonalAttributeQuery = lowerMessage.match(
+      /\b(what'?s|what is|who is|who'?s|where is|where'?s|tell me)\s+(my|your)\s+\w/i
+    );
+    if (hasPersonalAttributeQuery) {
+      scores.memory_retrieve *= 3.5;
+      scores.greeting *= 0.1;
+      scores.general_knowledge *= 0.3;
+      scores.command_automate *= 0.3;
+      console.log('🪪 [DISTILBERT] Personal-attribute query detected - strong boost memory_retrieve, penalize greeting');
     }
 
     if (hasRetrievalQuestion) {
