@@ -2129,7 +2129,42 @@ class DistilBertIntentParser {
         "Update the file with Genesis 22 verses for the kids",
         "Find the weekly memory verse file and change it to the next chapter",
 
-        // ── Application launching (NOT screen intelligence) ──────────────────
+        // ── Service automation & external integrations (need a skill) ────────
+        // Gmail / email monitoring
+        "Watch my incoming mail on Gmail and give me a daily summary",
+        "Monitor my Gmail inbox and send me a text every night",
+        "Check my Gmail inbox and summarize new emails at 9pm",
+        "Watch my email and alert me when I get something from my boss",
+        "Monitor my inbox and forward important emails to me",
+        "Send me a daily email digest of my Gmail inbox",
+        "Watch for new emails in my Gmail and notify me by text",
+        "Poll my Gmail every hour and send me a summary",
+        "Check my inbox and send a text message summary at night",
+        "Monitor my email and send a daily report via SMS",
+        // SMS / text notifications
+        "Send me a text message when my package arrives",
+        "Text me a reminder at 9pm every night",
+        "Send me an SMS summary of my day",
+        "Notify me by text when there are new emails",
+        "Send a daily SMS with my schedule",
+        // Calendar / scheduling
+        "Check my calendar and remind me of tomorrow's events",
+        "Monitor my Google Calendar and text me daily reminders",
+        "Watch my calendar and send me a morning briefing",
+        "Schedule a daily summary of my meetings at 8am",
+        "Set up a daily reminder for my calendar events",
+        // Slack / Discord / messaging apps
+        "Watch my Slack messages and summarize them daily",
+        "Monitor my Discord server and alert me on new messages",
+        "Check my Slack and send a daily digest",
+        // General service monitoring
+        "Track my GitHub issues and notify me of new ones",
+        "Monitor my website uptime and alert me if it goes down",
+        "Watch my Notion database for new entries",
+        "Monitor my Airtable and send updates",
+        "Poll my API endpoint every 5 minutes",
+
+        // ── Application launching (NOT screen intelligence) ──────────────────────
         "Open Chrome",
         "Close all windows",
         "Play some music",
@@ -5290,7 +5325,7 @@ class DistilBertIntentParser {
     
     // 1️⃣ "I NEED YOU TO / I NEED TO / HELP ME / CAN YOU" + ACTION VERBS - Strong signal for command_automate
     const hasINeedTo = lowerMessage.match(/^(i need (you to|you |to )|help me |can you (do|help|go|search|find|book|buy|apply|fill|sign|renew|register|schedule|order|check|navigate|open|create|send|submit)|please (do|go|search|find|book|buy|apply|fill|sign|renew|register|schedule|order|check|navigate|open|create|send|submit))/i);
-    const hasAutomationActionVerb = lowerMessage.match(/\b(open|launch|start|close|click|type|paste|copy|create|delete|move|navigate|goto|go to|find|search|select|drag|drop|scroll|press|enter|edit|update|append|write|rename|modify|renew|book|apply|register|schedule|order|buy|purchase|sign up|fill out|submit|pay|cancel|track|install|download|reset|upgrade|unsubscribe)\b/);
+    const hasAutomationActionVerb = lowerMessage.match(/\b(open|launch|start|close|click|type|paste|copy|create|delete|move|navigate|goto|go to|find|search|select|drag|drop|scroll|press|enter|edit|update|append|write|rename|modify|renew|book|apply|register|schedule|order|buy|purchase|sign up|fill out|submit|pay|cancel|track|install|download|reset|upgrade|unsubscribe|watch|monitor|poll|notify|alert|summarize|forward|sync|fetch|check|send|text)\b/);
     if (hasINeedTo && hasAutomationActionVerb) {
       scores.command_automate *= 2.5;
       scores.screen_intelligence *= 0.3;
@@ -5299,6 +5334,22 @@ class DistilBertIntentParser {
       console.log('🎯 [DISTILBERT] "I need to/help me/can you" + action verb detected - boosting command_automate');
     }
     
+    // 1b️⃣ SERVICE AUTOMATION OVERRIDE — "watch my Gmail", "monitor my inbox", "send me a daily text"
+    // These are external service integrations that need a skill — always command_automate.
+    const isServiceAutomation = lowerMessage.match(
+      /\b(watch|monitor|poll|check|track|sync|fetch|forward|filter|archive|summarize|notify|alert)\b.{0,80}\b(gmail|inbox|email|emails|mail|message|messages|text|sms|slack|discord|telegram|whatsapp|calendar|schedule|event|events|appointment|notion|airtable|jira|trello|asana|github|linear|hubspot|salesforce|sheet|spreadsheet|drive|dropbox|twitter|instagram|linkedin|reddit)\b/i
+    ) || lowerMessage.match(
+      /\b(send|give|text|notify)\b.{0,60}\b(daily|weekly|every|each|nightly|morning|evening|night|at \d|around \d|summary|digest|briefing|reminder|alert|report)\b/i
+    );
+    if (isServiceAutomation) {
+      const maxScore = Math.max(...Object.values(scores));
+      scores.command_automate = Math.max(scores.command_automate, maxScore) * 2.0;
+      scores.memory_retrieve = 0.001;
+      scores.memory_store = 0.001;
+      scores.screen_intelligence *= 0.1;
+      console.log('🔔 [DISTILBERT] Service automation request — hard override to command_automate');
+    }
+
     // 2️⃣ FILE SEARCH / EXISTENCE QUERIES - "do I have X files", "list all apps", "find files"
     // These are filesystem queries → command_automate (mdfind/find/ls), NOT screen_intelligence
     const isFileSearchQuery = lowerMessage.match(
