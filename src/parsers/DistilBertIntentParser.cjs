@@ -51,11 +51,8 @@ class DistilBertIntentParser {
         "Keep in mind I'm allergic to peanuts",
         "Note down my car's VIN number",
         "Remember my favorite coffee is oat milk latte",
-        "Set a reminder for my dentist appointment next Friday at 3pm",
-        "Remind me about the meeting tomorrow at 10am",
-        "I have an appointment next week on Tuesday. Set a reminder",
-        "Create a reminder for my doctor's appointment on Monday",
-        "I need a reminder for the team standup at 9am tomorrow",
+        // NOTE: "Set a reminder", "Remind me in X minutes" moved to command_automate
+        // — they need the schedule pseudo-skill, not memory storage.
         "I need to buy milk and eggs",
         "Don't forget my dentist appointment on Friday",
         "Keep in mind that Sarah's birthday is next week",
@@ -73,13 +70,10 @@ class DistilBertIntentParser {
         "Keep in mind I'm allergic to peanuts",
         "Note down my car's VIN number",
         "Remember my favorite coffee is oat milk latte",
-        "Set a reminder for my dentist appointment next Friday at 3pm",
-        "Set a reminder that I have appt. in two weeks",
-        "Remind me about the meeting tomorrow at 10am",
-        "I have an appointment next week on Tuesday. Set a reminder",
+        // NOTE: reminder seeds moved to command_automate (schedule pseudo-skill)
 
         // ── New – richer phrasing, multi-entity, typos ───────
-        "Quick reminder: call Dr. Patel on Tuesday 9am about bloodwork",
+        // NOTE: "Quick reminder: call Dr. Patel" moved to command_automate
         "Store this: license plate 7XYZ123, expires 2026-08-31",
         "Jot down that I owe Mike $42 for the concert tickets",
         "Never forget: anniversary dinner reservation at Le Petit Bistro, 7:30pm Sat",
@@ -2035,6 +2029,27 @@ class DistilBertIntentParser {
         "List the contents of my Documents folder",
         "Show me the files in my home directory",
 
+        // ── Reminder / timer / alarm / schedule ─────────────────
+        // These need the schedule pseudo-skill to fire a timed notification.
+        // NOT memory_store — storing a fact doesn't actually remind anyone.
+        "Remind me in 5 minutes to check the oven",
+        "Remind me about the meeting tomorrow at 10am",
+        "Set a reminder for my dentist appointment next Friday at 3pm",
+        "Set a timer for 10 minutes",
+        "Set an alarm for 7am",
+        "Alert me in 30 seconds",
+        "Wake me up at 6:30am",
+        "Notify me in 1 hour to take my medication",
+        "Remind me to call mom at 5pm",
+        "In 5 minutes remind me to check the laundry",
+        "Set a reminder that I have an appointment in two weeks",
+        "Create a reminder for my doctor's appointment on Monday",
+        "I need a reminder for the team standup at 9am tomorrow",
+        "Quick reminder: call Dr. Patel on Tuesday 9am about bloodwork",
+        "Remind me to pick up groceries after work",
+        "Set a 15 minute timer",
+        "Remind me in 2 hours to submit the report",
+
         // ── Date / time / system info ──────────────────────
         // These need shell.run (date, system_profiler, etc.) — NOT memory_retrieve or general_knowledge
         "What's today's date",
@@ -2250,6 +2265,55 @@ class DistilBertIntentParser {
         "Uncheck the newsletter checkbox",
         "Scroll down the page",
         "Scroll to the bottom",
+
+        // ── SMS / text-to-me actions ──────────────────
+        // Canonical forms
+        "Text this to me",
+        "Text that to me",
+        "Text these to me",
+        "Send this to me",
+        "Send that to me",
+        "Send these to me",
+        "Text this info to me",
+        "Text that info to me",
+        "Send this info to me",
+        "Send that info to me",
+        "Text me this",
+        "Text me that",
+        "Text me these",
+        "Send me this",
+        "Send me that",
+        "Text me the results",
+        "Send me the results",
+        "Text me the details",
+        "Send me the details",
+        "Text this to my phone",
+        "Send this to my phone",
+        "Text that to my phone",
+        "Text this to my number",
+        "Send this to my number",
+        "Text me the info",
+        "Send me the info",
+        // With destination qualifier
+        "Text this to me now",
+        "Text that info to my phone",
+        "Send these results to my phone",
+        "Email this to me",
+        "Email me this",
+        "Email me the results",
+        "Forward this to me",
+        "Forward that to me",
+        // Typos and informal variants (model must learn these via embedding similarity)
+        "Text these to my me",
+        "text thes to me",
+        "sned this to me",
+        "txt this to me",
+        "text thos to me",
+        "send thsi to me",
+        "text this too me",
+        "text me thos",
+        "snd me this",
+        "text me these info",
 
         // ── Email actions ──────────────────
         "Send an email to John",
@@ -4777,6 +4841,11 @@ class DistilBertIntentParser {
         "Is this contract signed",
         "Check if this is signed",
         "Has this been signed"
+
+        // NOTE: The following are explicitly NOT screen_intelligence — do not add these:
+        // "Text this to me", "Send this to me", "Text me this", "Send me the results"
+        // Those are command_automate (SMS/email skill invocation).
+        // They appear here as a comment so the model boundaries are clear to maintainers.
       ],
 
       greeting: [

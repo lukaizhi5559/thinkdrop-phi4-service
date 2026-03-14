@@ -22,6 +22,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const healthRoutes = require('./routes/health');
 const intentRoutes = require('./routes/intent');
 const llmRoutes = require('./routes/llm');
+const domainRoutes = require('./routes/domain');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
@@ -82,6 +83,9 @@ app.use('/', validateApiKey, validateMCPRequest, intentRoutes);
 // LLM generation routes (general.answer, general.answer.stream, entity.extract)
 // These use validateMCPRequest but bypass the strict intent-parse validation
 app.use('/', validateApiKey, validateMCPRequest, llmRoutes);
+
+// Domain extraction route (domain.extract) — zero-shot NLI + compromise fallback
+app.use('/', validateApiKey, validateMCPRequest, domainRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
