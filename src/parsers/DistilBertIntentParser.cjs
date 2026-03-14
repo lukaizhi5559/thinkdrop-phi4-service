@@ -1952,6 +1952,24 @@ class DistilBertIntentParser {
         "What's the difference between let and const?",
         "Should I use MongoDB or SQL?",
         
+        // ── Language, pronunciation, translation, definitions ──────────────
+        "How do I pronounce the spanish word for fish",
+        "How do you pronounce quinoa",
+        "What's the French word for thank you",
+        "How do you say hello in Japanese",
+        "Translate good morning to German",
+        "What does 'schadenfreude' mean",
+        "Define ephemeral",
+        "What's the definition of ubiquitous",
+        "How is 'croissant' pronounced",
+        "What's the Italian word for cheese",
+        "Translate 'where is the bathroom' to Spanish",
+        "How do you spell bureaucracy",
+        "What does the word 'serendipity' mean",
+        "How do you conjugate 'être' in French",
+        "What's the plural of octopus",
+        "What's the difference between affect and effect",
+
         // ── Explanation requests ──────────────────────────────
         "Explain how async/await works",
         "Explain the event loop",
