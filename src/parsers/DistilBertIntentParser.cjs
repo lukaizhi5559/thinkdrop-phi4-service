@@ -2047,6 +2047,30 @@ class DistilBertIntentParser {
         "List the contents of my Documents folder",
         "Show me the files in my home directory",
 
+        // ── Find file by name + read/analyze ──────────────────
+        // "find the file cheese and analyze it" must be command_automate (mdfind + fs.read)
+        // NOT screen_intelligence — there is no screen to analyze, it's a file search
+        "Find the file cheese and analyze and tell me what's it about",
+        "Find the file called notes and read it",
+        "Find the file budget and tell me what's in it",
+        "Find the file resume and analyze it",
+        "Locate the file called report and read it",
+        "Find the cheese text file and tell me about it",
+        "Find my notes file and summarize it",
+        "Locate the file invoice and tell me what it says",
+        "Find the file called readme and read it",
+        "Search for the file config and open it",
+        "Find a file named todo and tell me what's in it",
+        "Find the file project and analyze it",
+        "Locate the file budget.txt and summarize",
+        "Find the notes.txt file on my computer",
+        "Find the file data and read its contents",
+        "Search for cheese.txt and tell me about it",
+        "Find the file cheese and read it",
+        "Locate cheese file and summarize what it says",
+        "Find the text file about cheese",
+        "Find the cheese file on my mac",
+
         // ── Reminder / timer / alarm / schedule ─────────────────
         // These need the schedule pseudo-skill to fire a timed notification.
         // NOT memory_store — storing a fact doesn't actually remind anyone.
