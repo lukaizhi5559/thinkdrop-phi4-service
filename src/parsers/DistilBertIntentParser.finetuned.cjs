@@ -176,14 +176,16 @@ class DistilBertIntentParser {
     }
 
     // Explicit screenshot/screen-read language → screen_intelligence
+    // Boost to 0.95 to beat any command_automate score the model may produce.
     if (/\b(what'?s on my screen|read the screen|screenshot|screen capture|what does (it|the screen) say)\b/i.test(lower)) {
-      scores.screen_intelligence = Math.max(scores.screen_intelligence || 0, 0.80);
+      scores.screen_intelligence = Math.max(scores.screen_intelligence || 0, 0.95);
     }
 
-    // Single-word or 2-word message that matches a known app name → app_control_start
+    // Single-word or 2-word message that matches a known app name → command_automate (shell.run open -a)
+    // app_control_start is ONLY for explicit "take control / control mode" activation phrases
     const words = message.trim().split(/\s+/);
     if (words.length <= 3 && /^(obsidian|linear|figma|warp|notion|slack|zoom|spotify|discord|vscode|vs code|safari|firefox|chrome|calendar|mail|messages|facetime|finder|terminal|xcode|pycharm|intellij|datagrip|tableau|arc|brave|cursor|replit|codepen|postman|insomnia|raycast|alfred|things|todoist|fantastical|bear|craft|capacities|logseq|roam|anki|day one|dayone)$/i.test(message.trim())) {
-      scores.app_control_start = Math.max(scores.app_control_start || 0, 0.80);
+      scores.command_automate = Math.max(scores.command_automate || 0, 0.85);
     }
   }
 
