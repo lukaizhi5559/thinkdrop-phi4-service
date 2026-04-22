@@ -23,6 +23,7 @@ const healthRoutes = require('./routes/health');
 const intentRoutes = require('./routes/intent');
 const llmRoutes = require('./routes/llm');
 const domainRoutes = require('./routes/domain');
+const intentClassifyRoutes = require('./routes/intentClassify');
 
 // Services
 const intentParsingService = require('./services/intentParsing');
@@ -86,6 +87,9 @@ app.use('/', validateApiKey, validateMCPRequest, llmRoutes);
 
 // Domain extraction route (domain.extract) — zero-shot NLI + compromise fallback
 app.use('/', validateApiKey, validateMCPRequest, domainRoutes);
+
+// Intent classification route (intent.classify) — Xenova zero-shot ensemble for intent routing
+app.use('/', validateApiKey, validateMCPRequest, intentClassifyRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
