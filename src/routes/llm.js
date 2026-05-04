@@ -79,6 +79,7 @@ async function isOllamaAvailable() {
 /**
  * Format a single memory (screen capture) into clean readable text for the LLM.
  * Extracts appName, windowTitle, url, and files from metadata.
+ * Uses formattedDate (from stategraph) if available, falls back to metadata.capturedAt.
  */
 function formatMemory(mem, index) {
   const meta = (typeof mem.metadata === 'string' ? JSON.parse(mem.metadata || '{}') : mem.metadata) || {};
@@ -88,15 +89,24 @@ function formatMemory(mem, index) {
   const files = Array.isArray(meta.files) && meta.files.length > 0
     ? meta.files.slice(0, 5).join(', ')
     : '';
-  const capturedAt = meta.capturedAt
-    ? new Date(meta.capturedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    : '';
+  
+  // Use formattedDate from stategraph if available (includes absolute + relative dates)
+  let dateStr = '';
+  if (mem.formattedDate && mem.formattedDate.absolute) {
+    dateStr = mem.formattedDate.absolute;
+    if (mem.formattedDate.relative) {
+      dateStr += ` ${mem.formattedDate.relative}`;
+    }
+  } else if (meta.capturedAt) {
+    // Fallback to metadata timestamp only
+    dateStr = new Date(meta.capturedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
 
   let line = `[${index + 1}] App: ${app}`;
   if (title) line += ` | Window: ${title}`;
   if (url) line += ` | URL: ${url}`;
   if (files) line += ` | Files: ${files}`;
-  if (capturedAt) line += ` | At: ${capturedAt}`;
+  if (dateStr) line += ` | At: ${dateStr}`;
   return line;
 }
 
