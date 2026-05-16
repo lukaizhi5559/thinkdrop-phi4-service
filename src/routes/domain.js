@@ -74,7 +74,6 @@ const DOMAIN_SERVICE_MAP = {
   'music':              { services: ['spotify', 'apple-music'],                         skillHint: 'spotify.control' },
   'jira':               { services: ['jira', 'linear', 'asana'],                        skillHint: 'jira.ticket' },
   'project-management': { services: ['jira', 'linear', 'asana', 'trello'],             skillHint: 'jira.ticket' },
-  'file-system':        { services: ['shell'],                                           skillHint: 'shell.fs' },
   'web-browser':        { services: ['playwright', 'browser.act'],                      skillHint: 'browser.act' },
   'web-automation':     { services: ['playwright', 'browser.act'],                      skillHint: 'browser.act' },
   'database':           { services: ['postgres', 'mysql', 'sqlite'],                    skillHint: 'db.query' },
