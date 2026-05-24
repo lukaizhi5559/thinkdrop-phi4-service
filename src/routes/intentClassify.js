@@ -39,7 +39,7 @@ const INTENT_LABELS = [
 // ── Natural-language descriptions fed to NLI model ───────────────────────────
 // DeBERTa-NLI expects a hypothesis that sounds natural, not just a label word.
 const LABEL_HYPOTHESES = {
-  command_automate:    'The user wants to automate a task, navigate to a website, open an app, fill a form, or perform an action on the computer.',
+  command_automate:    'The user wants to automate a task, navigate to or interact with specific websites/platforms, search for or extract content from particular services, find items on specific sites, perform business operations, manage social media, handle e-commerce tasks, work with documents/files, communicate through platforms, or perform any targeted action on the computer.',
   app_control_start:   'The user wants to launch, start, open, or take control of a specific application on their device.',
   screen_intelligence: 'The user wants to know what is currently visible on their screen or wants the AI to read what is shown.',
   web_search:          'The user is asking a factual question or wants information looked up without navigating to a specific website.',
