@@ -105,7 +105,14 @@ async function startServer() {
     // Warm up parsers if enabled
     if (process.env.MODEL_WARMUP_ON_START === 'true') {
       console.log('🔥 Warming up DistilBERT parser...');
-      await intentParsingService.warmup();
+      try {
+        await intentParsingService.warmup();
+      } catch (warmupErr) {
+        // Non-fatal: the fine-tuned ONNX model may be missing. The server still
+        // serves /embedding.generate, /intent.classify (zero-shot), /general.answer,
+        // and /entity.extract. Only /intent.parse (DistilBERT) will fail per-request.
+        console.warn(`⚠️ DistilBERT warmup failed (server will start without intent.parse): ${warmupErr.message}`);
+      }
     }
     
     // Start server
