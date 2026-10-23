@@ -11,7 +11,6 @@ require('./utils/transformers-config.cjs');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 
 // Middleware
 const { validateApiKey } = require('./middleware/auth');
@@ -21,7 +20,8 @@ const { errorHandler } = require('./middleware/errorHandler');
 // Routes
 const healthRoutes = require('./routes/health');
 const intentRoutes = require('./routes/intent');
-const llmRoutes = require('./routes/llm');
+const decisionRoutes = require('./routes/decision');
+const embeddingRoutes = require('./routes/embedding');
 const domainRoutes = require('./routes/domain');
 const intentClassifyRoutes = require('./routes/intentClassify');
 
@@ -54,22 +54,10 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: {
-    version: 'mcp.v1',
-    status: 'error',
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests, please try again later',
-      retryable: true
-    }
-  }
-});
-
-app.use(limiter);
+// No rate limiting — this is a loopback-only inference service. The previous
+// 100 req/min cap was boilerplate abuse protection; decision.answer is a hot
+// path (multiple calls per user prompt) that the cap would throttle. Resource
+// protection is Ollama's job (queue + keep_alive), not a request quota's.
 
 // Body parser
 app.use(express.json({ limit: '10mb' }));
@@ -81,9 +69,12 @@ app.use('/', healthRoutes);
 // API routes (require auth and MCP validation)
 app.use('/', validateApiKey, validateMCPRequest, intentRoutes);
 
-// LLM generation routes (general.answer, general.answer.stream, entity.extract)
-// These use validateMCPRequest but bypass the strict intent-parse validation
-app.use('/', validateApiKey, validateMCPRequest, llmRoutes);
+// Decision route (decision.answer) — local typed decisions via Ollama,
+// replaces remote taskType:'classification' calls. Fail-open to remote.
+app.use('/', validateApiKey, validateMCPRequest, decisionRoutes);
+
+// Embedding route (embedding.generate) — Xenova/all-MiniLM-L6-v2, no Ollama
+app.use('/', validateApiKey, validateMCPRequest, embeddingRoutes);
 
 // Domain extraction route (domain.extract) — zero-shot NLI + compromise fallback
 app.use('/', validateApiKey, validateMCPRequest, domainRoutes);
@@ -124,9 +115,9 @@ async function startServer() {
       console.log('');
       console.log('📊 Available Actions:');
       console.log('   - POST /intent.parse');
-      console.log('   - POST /general.answer');
-      console.log('   - POST /general.answer.stream');
-      console.log('   - POST /entity.extract');
+      console.log('   - POST /intent.classify');
+      console.log('   - POST /domain.extract');
+      console.log('   - POST /decision.answer');
       console.log('   - POST /embedding.generate');
     });
   } catch (error) {
