@@ -159,6 +159,84 @@ function _normalize(q, ans) {
 }
 
 /**
+ * Vision-model fallback — general Ollama vision models (moondream, llava) are
+ * not registered with /v1/systemone (llama.cpp decision models only). Small
+ * VQA models also cannot follow nested-JSON answer contracts, so each question
+ * is asked as a plain lettered multiple-choice / yes-no / numeric prompt via
+ * /api/generate, and the parsed result is run through _normalize for the
+ * identical caller-facing shape.
+ */
+const _LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function _visionPrompt(q, state) {
+  const ctx = String(state || '(none)').slice(0, 400);
+  if (q.type === 'choice') {
+    const opts = q.options.map((o, i) => `${_LETTERS[i]}. ${o}`).join('\n');
+    return `Look at this screenshot of a web page.\n\nContext: ${ctx}\n\n${q.question}\n${opts}\n\nAnswer with one letter only: ${q.options.map((_, i) => _LETTERS[i]).join(', ')}.`;
+  }
+  if (q.type === 'noul') {
+    return `Look at this screenshot of a web page.\n\nContext: ${ctx}\n\n${q.question}\n\nAnswer yes or no.`;
+  }
+  const min = q.min ?? 0, max = q.max ?? 1;
+  return `Look at this screenshot of a web page.\n\nContext: ${ctx}\n\n${q.question}\n\nAnswer with a number from ${min} to ${max}.`;
+}
+
+function _visionParse(q, text) {
+  const t = String(text || '').trim();
+  if (q.type === 'choice') {
+    const m = t.match(/\b([A-Za-z])\b/);
+    if (m) {
+      const idx = m[1].toUpperCase().charCodeAt(0) - 65;
+      if (idx >= 0 && idx < q.options.length) return { choice: String(q.options[idx]) };
+    }
+    // Fallback: model echoed an option's lane token
+    const tok = t.toLowerCase();
+    const hit = q.options.find(o => {
+      const lane = String(o).toLowerCase().split(/\s+/)[0];
+      return lane.length > 2 && tok.includes(lane);
+    });
+    if (hit) return { choice: String(hit) };
+    return null;
+  }
+  if (q.type === 'noul') {
+    if (/^y(es)?\b/i.test(t)) return { noul: 1.0 };
+    if (/^no\b/i.test(t)) return { noul: 0.0 };
+    return null;
+  }
+  const n = t.match(/-?\d+/);
+  if (!n) return null;
+  const min = q.min ?? 0;
+  return { score: Math.min(Math.max(parseInt(n[0], 10) - min, 0), 9) };
+}
+
+async function _visionGenerateFallback({ model, state, questions, image }) {
+  const answers = {};
+  let lastErr = null;
+  for (const q of questions) {
+    try {
+      const resp = await fetch(`${OLLAMA_HOST}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model, prompt: _visionPrompt(q, state), images: [image], stream: false,
+          keep_alive: '10m', options: { temperature: 0 },
+        }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      if (!resp.ok) { lastErr = `generate HTTP ${resp.status}`; continue; }
+      const data = await resp.json().catch(() => null);
+      const raw = _visionParse(q, data?.response);
+      const n = _normalize(q, raw);
+      if (n.ok) answers[q.id] = n.value;
+      else lastErr = `unparseable answer for "${q.id}": ${String(data?.response || '').slice(0, 80)}`;
+    } catch (e) {
+      lastErr = e.message;
+    }
+  }
+  return Object.keys(answers).length ? { ok: true, answers } : { ok: false, error: lastErr || 'vision model produced no usable answers' };
+}
+
+/**
  * POST /decision.answer
  * Payload: { state?, questions: [...], image? (base64), options?: { model? } }
  */
@@ -204,6 +282,27 @@ router.post('/decision.answer', async (req, res) => {
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '');
+      // Vision fallback — systemone only accepts registered llama.cpp decision
+      // models (tev1:*); a general vision model (moondream, llava, …) answers
+      // the same typed contract through /api/generate instead.
+      if (image && /not a llama\.cpp decision model|not found|does not exist/i.test(text)) {
+        const gen = await _visionGenerateFallback({ model, state, questions, image });
+        if (gen.ok) {
+          const elapsedMs = Date.now() - startTime;
+          return res.json({
+            version: 'mcp.v1', service: 'phi4', action: 'decision.answer', requestId,
+            status: 'ok',
+            data: { answers: gen.answers, model },
+            metrics: { elapsedMs },
+          });
+        }
+        return res.json({
+          version: 'mcp.v1', service: 'phi4', action: 'decision.answer', requestId,
+          status: 'error',
+          error: { code: 'DECISION_MALFORMED', message: gen.error || 'vision fallback failed', retryable: true },
+          metrics: { elapsedMs: Date.now() - startTime },
+        });
+      }
       const notFound = resp.status === 404 || /not found|does not exist/i.test(text);
       const msg = notFound
         ? `decision model "${model}" not pulled — run: ollama pull ${model}`
