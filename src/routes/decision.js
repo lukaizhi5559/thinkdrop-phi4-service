@@ -45,6 +45,11 @@ function _pickTier() {
 const _tier = _pickTier();
 const DECISION_MODEL = process.env.DECISION_MODEL || _tier.model;
 const DECISION_VISION_MODEL = process.env.DECISION_VISION_MODEL || 'd3:2b';
+// The vision model is only invoked on judged screen captures — pinning it for
+// 10m keeps ~1.3GB RSS resident on small-RAM machines even when idle. A short
+// keep_alive lets Ollama evict it between captures; a cold judge pays the
+// reload once instead of holding RAM hostage.
+const VISION_KEEP_ALIVE = process.env.OLLAMA_VISION_KEEP_ALIVE || '90s';
 console.log(`[phi4/decision] tier=${_tier.tier} ram=${(os.totalmem() / 1024 ** 3).toFixed(1)}GB model=${DECISION_MODEL} vision=${DECISION_VISION_MODEL}`);
 
 // Ollama reachability probe — cached 30s, same pattern the old llm.js used.
@@ -219,7 +224,7 @@ async function _visionGenerateFallback({ model, state, questions, image }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model, prompt: _visionPrompt(q, state), images: [image], stream: false,
-          keep_alive: '10m', options: { temperature: 0 },
+          keep_alive: VISION_KEEP_ALIVE, options: { temperature: 0 },
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
@@ -269,7 +274,7 @@ router.post('/decision.answer', async (req, res) => {
       model,
       state: typeof state === 'string' ? (state || '(none)') : state,
       questions: _toSystemOneQuestions(questions),
-      keep_alive: '10m',
+      keep_alive: image ? VISION_KEEP_ALIVE : '10m',
       ...(image ? { images: [image] } : {}),
     };
 
