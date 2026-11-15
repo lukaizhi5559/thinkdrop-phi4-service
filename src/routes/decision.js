@@ -48,8 +48,10 @@ const DECISION_VISION_MODEL = process.env.DECISION_VISION_MODEL || 'd3:2b';
 // The vision model is only invoked on judged screen captures — pinning it for
 // 10m keeps ~1.3GB RSS resident on small-RAM machines even when idle. A short
 // keep_alive lets Ollama evict it between captures; a cold judge pays the
-// reload once instead of holding RAM hostage.
-const VISION_KEEP_ALIVE = process.env.OLLAMA_VISION_KEEP_ALIVE || '90s';
+// reload once instead of holding RAM hostage. 15s sits below the monitor's
+// SEMANTIC_VISION_MIN_MS vision-lane floor (30s) — the lane's own throttle
+// guarantees spaced calls, so anything longer would pin ~1.3GB permanently.
+const VISION_KEEP_ALIVE = process.env.OLLAMA_VISION_KEEP_ALIVE || '15s';
 console.log(`[phi4/decision] tier=${_tier.tier} ram=${(os.totalmem() / 1024 ** 3).toFixed(1)}GB model=${DECISION_MODEL} vision=${DECISION_VISION_MODEL}`);
 
 // Ollama reachability probe — cached 30s, same pattern the old llm.js used.
